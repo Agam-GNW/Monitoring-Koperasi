@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200">
+  <!-- Background -->
+  <rect width="800" height="200" fill="white"/>
+  
+  <!-- Logo Icon (Simplified flame and globe icon) -->
+  <g transform="translate(30, 50)">
+    <!-- Globe/Circle -->
+    <circle cx="35" cy="50" r="30" fill="none" stroke="#1a5f7a" stroke-width="3"/>
+    <path d="M 35 20 Q 35 50 35 80" stroke="#1a5f7a" stroke-width="2" fill="none"/>
+    <path d="M 5 50 Q 35 50 65 50" stroke="#1a5f7a" stroke-width="2" fill="none"/>
+    <ellipse cx="35" cy="50" rx="15" ry="30" fill="none" stroke="#1a5f7a" stroke-width="2"/>
+    
+    <!-- Flame element -->
+    <path d="M 50 35 Q 55 25 60 35 Q 58 40 60 45 Q 55 42 50 45 Q 52 40 50 35" fill="#ff9933"/>
+  </g>
+  
+  <!-- Text: dinkukmda.gin -->
+  <text x="100" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#1a5f7a">din</text>
+  <text x="190" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#2ecc71">kukm</text>
+  <text x="340" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#3498db">dag</text>
+  <text x="460" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ff9933">in</text>
+  
+  <!-- Dot after "dagin" -->
+  <circle cx="520" cy="75" r="4" fill="#ff9933"/>
+  
+  <!-- Text: Kota Bogor -->
+  <text x="100" y="120" font-family="Arial, sans-serif" font-size="32" font-weight="normal" fill="#3498db">Kota </text>
+  <text x="200" y="120" font-family="Arial, sans-serif" font-size="32" font-weight="normal" fill="#2ecc71">Bogor</text>
+</svg>

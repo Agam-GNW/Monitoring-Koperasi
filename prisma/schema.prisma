@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  HIGH  // Administrator Pusat
+  LOW   // Pengelola Koperasi
+}
+
+enum KoperasiType {
+  SIMPAN_PINJAM
+  KONSUMSI
+  PRODUKSI
+  JASA
+  SERBA_USAHA
+}
+
+enum KoperasiStatus {
+  PENDING           // Menunggu persetujuan
+  AKTIF_SEHAT       // Disetujui dan dalam kondisi sehat
+  AKTIF_TIDAK_SEHAT // Disetujui tapi dalam kondisi tidak sehat
+  TIDAK_DISETUJUI   // Ditolak oleh admin
+}
+
+enum LegalStatus {
+  LEGAL
+  PENDING_REVIEW
+  REJECTED
+  NOT_SUBMITTED
+}
+
+enum ActivityType {
+  MEETING
+  TRAINING
+  AUDIT
+  EVENT
+  OTHER
+}
+
+enum ActivityStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentStatus {
+  APPROVED
+  REJECTED
+  PENDING
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole  @default(LOW)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations - One user LOW can only create one koperasi
+  ownedKoperasi Koperasi? @relation("KoperasiOwner")
+
+  @@map("users")
+}
+
+model Koperasi {
+  id                String        @id @default(cuid())
+  name              String
+  type              KoperasiType
+  status            KoperasiStatus @default(PENDING)
+  legalStatus       LegalStatus   @default(NOT_SUBMITTED)
+  totalMembers      Int           @default(0)
+  registrationDate  DateTime      @default(now())
+  lastActivity      DateTime      @default(now())
+  address           String
+  contactPerson     String
+  contactPhone      String
+  contactEmail      String?
+  description       String?
+  
+  // Additional fields for approval process
+  submissionDate    DateTime?     // When submitted for approval
+  approvalDate      DateTime?     // When approved/rejected
+  approvalNotes     String?       // Notes from admin
+  rejectionReason   String?       // Reason if rejected
+  
+  // Audit fields
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relations - One koperasi belongs to one user LOW
+  owner             User          @relation("KoperasiOwner", fields: [ownerId], references: [id])
+  ownerId           String        @unique
+
+  // Relations
+  activities        Activity[]
+  documents         Document[]
+  members           Member[]
+
+  @@map("koperasi")
+}
+
+model Member {
+  id            String    @id @default(cuid())
+  name          String
+  nik           String?   @unique // Nomor Induk Kependudukan
+  dateOfBirth   DateTime
+  placeOfBirth  String?
+  gender        String?   // LAKI_LAKI atau PEREMPUAN
+  address       String
+  phone         String?
+  email         String?
+  joinDate      DateTime  @default(now())
+  memberNumber  String?   // Nomor anggota koperasi
+  isActive      Boolean   @default(true)
+  
+  // Relations
+  koperasi      Koperasi  @relation(fields: [koperasiId], references: [id], onDelete: Cascade)
+  koperasiId    String
+  
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("members")
+}
+
+model Activity {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  type        ActivityType
+  status      ActivityStatus @default(PLANNED)
+  location    String?
+  
+  // Relations
+  koperasi    Koperasi       @relation(fields: [koperasiId], references: [id], onDelete: Cascade)
+  koperasiId  String
+  
+  // Audit fields
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("activities")
+}
+
+model Document {
+  id           String         @id @default(cuid())
+  fileName     String
+  originalName String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  status       DocumentStatus @default(PENDING)
+  uploadDate   DateTime       @default(now())
+  reviewDate   DateTime?
+  reviewNotes  String?
+  
+  // Relations
+  koperasi     Koperasi       @relation(fields: [koperasiId], references: [id], onDelete: Cascade)
+  koperasiId   String
+  
+  // Audit fields
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@map("documents")
+}
