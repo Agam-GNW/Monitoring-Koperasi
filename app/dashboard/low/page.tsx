@@ -100,7 +100,7 @@ export default function LowDashboard() {
       if (!user?.ownedKoperasi) return;
       
       try {
-        const response = await fetch('/api/koperasi/stats');
+        const response = await fetch(`/api/koperasi/stats?koperasiId=${user.ownedKoperasi.id}`);
         if (response.ok) {
           const data = await response.json();
           setStats(data.stats);
@@ -246,17 +246,22 @@ export default function LowDashboard() {
   };
 
   const handleRegistrationComplete = () => {
+    // This is called ONLY after the entire registration flow is complete
+    // (form submission + document upload + success screen)
     setShowKoperasiForm(false);
     setSubmitSuccess(true);
-    // Refresh koperasi data
+    
+    // Refresh koperasi data to show the newly created koperasi
     fetchKoperasiData();
+    
     setTimeout(() => {
       setSubmitSuccess(false);
     }, 3000);
   };
 
   const handleShowForm = () => {
-    setShowKoperasiForm(true);
+    // Redirect to /dashboard/low/koperasi/manage instead of showing form inline
+    router.push('/dashboard/low/koperasi/manage');
   };
 
   const handleCancelForm = () => {
@@ -342,8 +347,8 @@ export default function LowDashboard() {
 
           {/* Form Pendaftaran */}
           <KoperasiRegistration
-            onComplete={handleRegistrationComplete}
-            onCancel={handleCancelForm}
+            onBack={handleCancelForm}
+            onSuccess={handleRegistrationComplete}
           />
         </div>
       </LayoutWrapper>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import LayoutWrapper from '../../../../../components/layout/LayoutWrapper';
 import { KoperasiTable } from '../../../../../components/ui/KoperasiTable';
-import { KoperasiForm, KoperasiFormData } from '../../../../../components/ui/KoperasiForm';
+import { KoperasiRegistration } from '../../../../../components/ui/KoperasiRegistration';
 import { 
   Building2, 
   ArrowLeft,
@@ -159,43 +159,28 @@ export default function ManageKoperasiPage() {
     });
   };
 
-  const handleKoperasiSubmit = async (data: KoperasiFormData) => {
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/koperasi/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        setSubmitSuccess(true);
-        setShowKoperasiForm(false);
-        // Refresh user data to get the newly submitted koperasi
-        const userResponse = await fetch('/api/auth/me');
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
+  const handleKoperasiRegistrationComplete = () => {
+    setSubmitSuccess(true);
+    setShowKoperasiForm(false);
+    
+    // Refresh user data to get the newly registered koperasi
+    fetch('/api/auth/me')
+      .then(response => response.json())
+      .then(userData => {
+        if (userData.user) {
           setUser(userData.user);
         }
-      } else {
-        console.error('Failed to submit koperasi');
-      }
-    } catch (error) {
-      console.error('Error submitting koperasi:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      })
+      .catch(error => console.error('Error refreshing user:', error));
+  };
+
+  const handleCancelForm = () => {
+    setShowKoperasiForm(false);
   };
 
   const handleShowForm = () => {
     setShowKoperasiForm(true);
     setSubmitSuccess(false);
-  };
-
-  const handleCancelForm = () => {
-    setShowKoperasiForm(false);
   };
 
   const handleLogout = async () => {
@@ -346,10 +331,9 @@ export default function ManageKoperasiPage() {
           </div>
 
           {/* Form Pendaftaran */}
-          <KoperasiForm
-            onSubmit={handleKoperasiSubmit}
-            onCancel={handleCancelForm}
-            isSubmitting={isSubmitting}
+          <KoperasiRegistration
+            onBack={handleCancelForm}
+            onSuccess={handleKoperasiRegistrationComplete}
           />
         </div>
       </LayoutWrapper>
