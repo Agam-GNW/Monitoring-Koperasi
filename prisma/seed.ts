@@ -41,6 +41,7 @@ async function main() {
   // Create sample LOW users (pengelola koperasi)
   const lowUsers = [];
   const lowUserData = [
+    { name: 'Arya Maul', email: 'Aryamaul@gmail.com' },
     { name: 'Ahmad Wijaya', email: 'ahmad@majubersama.com' },
     { name: 'Siti Nurhaliza', email: 'siti@berkahmandiri.com' },
     { name: 'Budi Santoso', email: 'budi@sejahterproduktif.com' },
@@ -77,7 +78,7 @@ async function main() {
       submissionDate: new Date('2024-01-15'),
       approvalDate: new Date('2024-01-20'),
       approvalNotes: 'Semua dokumen lengkap dan memenuhi persyaratan',
-      ownerId: lowUsers[0].id,
+      ownerId: lowUsers[1].id,
     },
     {
       name: 'Koperasi Berkah Mandiri',
@@ -93,12 +94,12 @@ async function main() {
       submissionDate: new Date('2024-02-10'),
       approvalDate: new Date('2024-02-15'),
       approvalNotes: 'Disetujui dengan catatan untuk melengkapi dokumen RAT',
-      ownerId: lowUsers[1].id,
+      ownerId: lowUsers[2].id,
     },
     {
       name: 'Koperasi Sejahtera Produktif',
       type: KoperasiType.PRODUKSI,
-      status: KoperasiStatus.PENDING,
+      status: 'PENDING_VERIFICATION' as any,
       legalStatus: LegalStatus.PENDING_REVIEW,
       totalMembers: 67,
       address: 'Jl. Industri No. 78, Surabaya',
@@ -107,7 +108,7 @@ async function main() {
       contactEmail: 'budi@sejahterproduktif.com',
       description: 'Koperasi produksi hasil pertanian dan kerajinan',
       submissionDate: new Date('2024-03-01'),
-      ownerId: lowUsers[2].id,
+      ownerId: lowUsers[3].id,
     },
   ];
 

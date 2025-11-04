@@ -457,11 +457,14 @@ export default function ManageKoperasiPage() {
                         Tanggal Pendaftaran
                       </label>
                       <div className="text-gray-900 font-medium">
-                        {new Date(user.ownedKoperasi.registrationDate).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                        {user.ownedKoperasi.registrationDate 
+                          ? new Date(user.ownedKoperasi.registrationDate).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })
+                          : '-'
+                        }
                       </div>
                     </div>
                   </div>

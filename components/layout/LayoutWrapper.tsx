@@ -44,6 +44,9 @@ export default function LayoutWrapper({
         case 'anggota-koperasi':
           router.push('/dashboard/low/members');
           break;
+        case 'pengaturan':
+          router.push('/dashboard/low/profile');
+          break;
         // Add more navigation cases as needed
         default:
           break;

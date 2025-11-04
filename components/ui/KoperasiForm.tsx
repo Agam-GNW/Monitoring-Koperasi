@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Building2, Users, MapPin, Phone, Mail, FileText, User, Calendar, AlertTriangle, DollarSign } from 'lucide-react';
 import { Button } from './Button';
+import { DocumentUpload } from './DocumentUpload';
 
 // Interfaces for location data
 interface Province {
@@ -37,7 +38,6 @@ export interface KoperasiFormData {
   establishmentDate: string;
   fundingSource: string;
   initialCapital: number;
-  legalDocuments: File[];
 }
 
 interface KoperasiFormProps {
@@ -62,7 +62,6 @@ export function KoperasiForm({ onSubmit, onCancel, isSubmitting = false }: Koper
     establishmentDate: '',
     fundingSource: '',
     initialCapital: 0,
-    legalDocuments: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -261,11 +260,6 @@ export function KoperasiForm({ onSubmit, onCancel, isSubmitting = false }: Koper
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setFormData(prev => ({ ...prev, legalDocuments: files }));
   };
 
   const formatCurrency = (value: number): string => {
@@ -639,31 +633,17 @@ export function KoperasiForm({ onSubmit, onCancel, isSubmitting = false }: Koper
             Dokumen Legal
           </h3>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              Upload Dokumen Pendirian
-            </label>
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              onChange={handleFileChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-            />
-            <p className="text-sm text-gray-700 mt-1 font-medium">
-              Upload dokumen seperti: Akta Pendirian, AD/ART, Surat Keterangan Domisili, dll.
-              Format yang didukung: PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+          {/* Note: Document upload will be handled after koperasi creation */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-900 font-medium">
+              📄 <strong>Catatan Penting:</strong> Setelah data koperasi disimpan, Anda akan diminta untuk mengupload 4 dokumen persyaratan:
             </p>
-            {formData.legalDocuments.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm font-medium text-gray-900">File terpilih:</p>
-                <ul className="text-sm text-gray-800">
-                  {formData.legalDocuments.map((file, index) => (
-                    <li key={index}>• {file.name}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <ul className="mt-2 space-y-1 text-sm text-blue-800">
+              <li>1. Akta Pendirian Koperasi</li>
+              <li>2. Berita Acara Rapat Pendirian</li>
+              <li>3. Daftar Nama & KTP Pendiri</li>
+              <li>4. Bukti Setoran Modal Awal</li>
+            </ul>
           </div>
         </div>
 

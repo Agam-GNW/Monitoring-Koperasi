@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { regencyCode: string } }
+  { params }: { params: Promise<{ regencyCode: string }> }
 ) {
   try {
-    const { regencyCode } = params;
+    const { regencyCode } = await params;
     
     const response = await fetch(`https://wilayah.id/api/districts/${regencyCode}.json`, {
       headers: {

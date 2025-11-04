@@ -62,14 +62,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Koperasi tidak ditemukan' }, { status: 404 });
     }
 
-    if (koperasi.status !== 'PENDING') {
+    // Allow approval for pending statuses
+    const allowedStatuses = ['PENDING_VERIFICATION', 'PENDING_SURVEY', 'SURVEY_SCHEDULED', 'SURVEY_COMPLETED', 'PENDING_APPROVAL'];
+    if (!allowedStatuses.includes(koperasi.status as any)) {
       return NextResponse.json(
-        { error: 'Koperasi sudah diproses sebelumnya' },
+        { error: 'Koperasi sudah diproses sebelumnya atau tidak dalam status yang dapat disetujui' },
         { status: 400 }
       );
     }
 
-    let newStatus: 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT' | 'TIDAK_DISETUJUI';
+    let newStatus: any;
     let message: string;
     
     switch (action) {
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
         message = 'Koperasi disetujui dengan status Aktif - Tidak Sehat';
         break;
       case 'REJECT':
-        newStatus = 'TIDAK_DISETUJUI';
+        newStatus = 'DITOLAK';
         message = 'Koperasi ditolak';
         break;
       default:
@@ -96,6 +98,7 @@ export async function POST(request: Request) {
         approvalDate: new Date(),
         approvalNotes: notes || '',
         rejectionReason: action === 'REJECT' ? rejectionReason : null,
+        lastRejectionDate: action === 'REJECT' ? new Date() : null,
         updatedAt: new Date(),
       },
       include: {
@@ -186,10 +189,16 @@ export async function GET(request: Request) {
     const total = await prisma.koperasi.count({ where: whereClause });
 
     const summary = {
-      pending: await prisma.koperasi.count({ where: { status: 'PENDING' } }),
+      pending: await prisma.koperasi.count({ 
+        where: { 
+          status: { 
+            in: ['PENDING_VERIFICATION', 'PENDING_SURVEY', 'SURVEY_SCHEDULED', 'SURVEY_COMPLETED', 'PENDING_APPROVAL'] 
+          } 
+        } 
+      }),
       approved_sehat: await prisma.koperasi.count({ where: { status: 'AKTIF_SEHAT' } }),
       approved_tidak_sehat: await prisma.koperasi.count({ where: { status: 'AKTIF_TIDAK_SEHAT' } }),
-      rejected: await prisma.koperasi.count({ where: { status: 'TIDAK_DISETUJUI' } }),
+      rejected: await prisma.koperasi.count({ where: { status: 'DITOLAK' } }),
     };
 
     const formattedData = koperasiList.map(k => ({

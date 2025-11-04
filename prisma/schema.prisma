@@ -27,10 +27,14 @@ enum KoperasiType {
 }
 
 enum KoperasiStatus {
-  PENDING           // Menunggu persetujuan
-  AKTIF_SEHAT       // Disetujui dan dalam kondisi sehat
-  AKTIF_TIDAK_SEHAT // Disetujui tapi dalam kondisi tidak sehat
-  TIDAK_DISETUJUI   // Ditolak oleh admin
+  PENDING_VERIFICATION    // Menunggu verifikasi dokumen admin
+  PENDING_SURVEY          // Dokumen diverifikasi, menunggu survei lokasi
+  SURVEY_SCHEDULED        // Survei dijadwalkan
+  SURVEY_COMPLETED        // Survei selesai, menunggu keputusan
+  PENDING_APPROVAL        // Menunggu persetujuan akhir pendirian
+  AKTIF_SEHAT             // Disetujui dan dalam kondisi sehat
+  AKTIF_TIDAK_SEHAT       // Disetujui tapi dalam kondisi tidak sehat
+  DITOLAK                 // Ditolak oleh admin
 }
 
 enum LegalStatus {
@@ -56,9 +60,20 @@ enum ActivityStatus {
 }
 
 enum DocumentStatus {
-  APPROVED
-  REJECTED
-  PENDING
+  PENDING     // Menunggu verifikasi
+  APPROVED    // Dokumen disetujui
+  REJECTED    // Dokumen ditolak
+  RESUBMIT    // Perlu submit ulang
+}
+
+enum DocumentType {
+  AKTA_PENDIRIAN        // Akta Pendirian Koperasi (AD/ART)
+  BERITA_ACARA          // Berita Acara Rapat Pendirian
+  DAFTAR_PENDIRI        // Daftar Nama & KTP Pendiri
+  BUKTI_SETORAN         // Bukti Setoran Modal Awal
+  SURAT_DOMISILI        // Surat Keterangan Domisili
+  NPWP                  // NPWP Koperasi
+  OTHER                 // Dokumen Lainnya
 }
 
 model User {
@@ -82,7 +97,7 @@ model Koperasi {
   id                String        @id @default(cuid())
   name              String
   type              KoperasiType
-  status            KoperasiStatus @default(PENDING)
+  status            KoperasiStatus @default(PENDING_VERIFICATION)
   legalStatus       LegalStatus   @default(NOT_SUBMITTED)
   totalMembers      Int           @default(0)
   registrationDate  DateTime      @default(now())
@@ -93,11 +108,28 @@ model Koperasi {
   contactEmail      String?
   description       String?
   
+  // Statistik Koperasi
+  totalFunds          Float         @default(0)      // Total Dana Koperasi
+  activeMembers       Int           @default(0)      // Jumlah Anggota Aktif
+  monthlyTransactions Float         @default(0)      // Transaksi Bulan Ini
+  
   // Additional fields for approval process
   submissionDate    DateTime?     // When submitted for approval
   approvalDate      DateTime?     // When approved/rejected
   approvalNotes     String?       // Notes from admin
   rejectionReason   String?       // Reason if rejected
+  resubmissionCount Int           @default(0)  // Jumlah pengajuan ulang
+  lastRejectionDate DateTime?     // Tanggal penolakan terakhir
+  
+  // Survey fields
+  surveyScheduledDate   DateTime?   // Tanggal survei dijadwalkan
+  surveyCompletedDate   DateTime?   // Tanggal survei selesai
+  surveyNotes           String?     // Catatan hasil survei
+  surveyOfficer         String?     // Petugas yang melakukan survei
+  
+  // Document verification
+  documentsVerifiedDate DateTime?   // Tanggal dokumen diverifikasi
+  documentsVerifiedBy   String?     // Admin yang verifikasi dokumen
   
   // Audit fields
   createdAt         DateTime      @default(now())
@@ -161,24 +193,27 @@ model Activity {
 }
 
 model Document {
-  id           String         @id @default(cuid())
-  fileName     String
-  originalName String
-  filePath     String
-  fileSize     Int
-  mimeType     String
-  status       DocumentStatus @default(PENDING)
-  uploadDate   DateTime       @default(now())
-  reviewDate   DateTime?
-  reviewNotes  String?
+  id             String         @id @default(cuid())
+  documentType   DocumentType   // Jenis dokumen
+  fileName       String
+  originalName   String
+  filePath       String
+  fileSize       Int
+  mimeType       String
+  status         DocumentStatus @default(PENDING)
+  uploadDate     DateTime       @default(now())
+  reviewDate     DateTime?
+  reviewNotes    String?
+  reviewedBy     String?        // Admin yang mereview
+  isRequired     Boolean        @default(true) // Dokumen wajib atau tidak
   
   // Relations
-  koperasi     Koperasi       @relation(fields: [koperasiId], references: [id], onDelete: Cascade)
-  koperasiId   String
+  koperasi       Koperasi       @relation(fields: [koperasiId], references: [id], onDelete: Cascade)
+  koperasiId     String
   
   // Audit fields
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@map("documents")
 }

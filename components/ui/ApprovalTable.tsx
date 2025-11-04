@@ -12,7 +12,8 @@ import {
   Mail,
   MapPin,
   Eye,
-  FileText
+  FileText,
+  Edit
 } from 'lucide-react';
 import { Button } from './Button';
 
@@ -40,13 +41,15 @@ interface ApprovalTableProps {
   onApprove: (koperasiId: string, action: 'APPROVE_SEHAT' | 'APPROVE_TIDAK_SEHAT', notes?: string) => void;
   onReject: (koperasiId: string, reason: string) => void;
   onView: (koperasi: KoperasiPending) => void;
+  onUpdateHealthStatus?: (koperasiId: string, newStatus: 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT') => void;
 }
 
-export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTableProps) {
+export function ApprovalTable({ data, onApprove, onReject, onView, onUpdateHealthStatus }: ApprovalTableProps) {
   const [selectedKoperasi, setSelectedKoperasi] = useState<string | null>(null);
-  const [action, setAction] = useState<'APPROVE_SEHAT' | 'APPROVE_TIDAK_SEHAT' | 'REJECT' | null>(null);
+  const [action, setAction] = useState<'APPROVE_SEHAT' | 'APPROVE_TIDAK_SEHAT' | 'REJECT' | 'UPDATE_HEALTH' | null>(null);
   const [notes, setNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
+  const [newHealthStatus, setNewHealthStatus] = useState<'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT'>('AKTIF_SEHAT');
   const [showModal, setShowModal] = useState(false);
 
   const getStatusBadge = (status: string) => {
@@ -84,7 +87,7 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
     }
   };
 
-  const handleActionClick = (koperasiId: string, actionType: 'APPROVE_SEHAT' | 'APPROVE_TIDAK_SEHAT' | 'REJECT') => {
+  const handleActionClick = (koperasiId: string, actionType: 'APPROVE_SEHAT' | 'APPROVE_TIDAK_SEHAT' | 'REJECT' | 'UPDATE_HEALTH') => {
     setSelectedKoperasi(koperasiId);
     setAction(actionType);
     setNotes('');
@@ -101,6 +104,10 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
         return;
       }
       onReject(selectedKoperasi, rejectionReason);
+    } else if (action === 'UPDATE_HEALTH') {
+      if (onUpdateHealthStatus) {
+        onUpdateHealthStatus(selectedKoperasi, newHealthStatus);
+      }
     } else {
       onApprove(selectedKoperasi, action, notes);
     }
@@ -110,6 +117,7 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
     setAction(null);
     setNotes('');
     setRejectionReason('');
+    setNewHealthStatus('AKTIF_SEHAT');
   };
 
   const formatDate = (date: Date) => {
@@ -222,6 +230,21 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
                           </button>
                         </>
                       )}
+                      {(koperasi.status === 'AKTIF_SEHAT' || koperasi.status === 'AKTIF_TIDAK_SEHAT') && onUpdateHealthStatus && (
+                        <button
+                          onClick={() => {
+                            setSelectedKoperasi(koperasi.id);
+                            setNewHealthStatus(koperasi.status === 'AKTIF_SEHAT' ? 'AKTIF_TIDAK_SEHAT' : 'AKTIF_SEHAT');
+                            setAction('UPDATE_HEALTH');
+                            setShowModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 rounded border border-blue-300 hover:bg-blue-50 flex items-center gap-1"
+                          title="Ubah Status Kesehatan"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Ubah Status
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -249,8 +272,9 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               {action === 'REJECT' ? 'Tolak Pengajuan' : 
-               action === 'APPROVE_SEHAT' ? 'Setujui - Status Sehat' : 
-               'Setujui - Status Tidak Sehat'}
+               action === 'APPROVE_SEHAT' ? 'Setujui - Status Sehat' :
+               action === 'APPROVE_TIDAK_SEHAT' ? 'Setujui - Status Tidak Sehat' :
+               'Ubah Status Kesehatan'}
             </h3>
             
             {action === 'REJECT' ? (
@@ -266,6 +290,40 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
                     rows={4}
                     placeholder="Jelaskan alasan penolakan..."
                   />
+                </div>
+              </div>
+            ) : action === 'UPDATE_HEALTH' ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Pilih status kesehatan baru untuk koperasi ini:
+                </p>
+                <div className="space-y-2">
+                  <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: newHealthStatus === 'AKTIF_SEHAT' ? '#10b981' : '#e5e7eb' }}>
+                    <input
+                      type="radio"
+                      name="healthStatus"
+                      value="AKTIF_SEHAT"
+                      checked={newHealthStatus === 'AKTIF_SEHAT'}
+                      onChange={(e) => setNewHealthStatus(e.target.value as 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT')}
+                      className="mr-3"
+                    />
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <span className="font-medium">Koperasi Sehat</span>
+                  </label>
+                  <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                    style={{ borderColor: newHealthStatus === 'AKTIF_TIDAK_SEHAT' ? '#f59e0b' : '#e5e7eb' }}>
+                    <input
+                      type="radio"
+                      name="healthStatus"
+                      value="AKTIF_TIDAK_SEHAT"
+                      checked={newHealthStatus === 'AKTIF_TIDAK_SEHAT'}
+                      onChange={(e) => setNewHealthStatus(e.target.value as 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT')}
+                      className="mr-3"
+                    />
+                    <XCircle className="w-5 h-5 text-orange-600 mr-2" />
+                    <span className="font-medium">Koperasi Tidak Sehat</span>
+                  </label>
                 </div>
               </div>
             ) : (
@@ -291,10 +349,12 @@ export function ApprovalTable({ data, onApprove, onReject, onView }: ApprovalTab
                 className={`flex-1 ${
                   action === 'REJECT' 
                     ? 'bg-red-600 hover:bg-red-700' 
+                    : action === 'UPDATE_HEALTH'
+                    ? 'bg-blue-600 hover:bg-blue-700'
                     : 'bg-blue-600 hover:bg-blue-700'
                 } text-white`}
               >
-                {action === 'REJECT' ? 'Tolak' : 'Setujui'}
+                {action === 'REJECT' ? 'Tolak' : action === 'UPDATE_HEALTH' ? 'Update Status' : 'Setujui'}
               </Button>
               <Button
                 onClick={() => setShowModal(false)}

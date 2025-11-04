@@ -54,6 +54,7 @@ export async function GET() {
             approvalDate: true,
             approvalNotes: true,
             rejectionReason: true,
+            registrationDate: true,
           }
         }
       }

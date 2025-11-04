@@ -116,7 +116,7 @@ export async function POST(request: Request) {
         id: koperasiId,
         name: name.trim(),
         type,
-        status: 'PENDING', // Status awal adalah PENDING menunggu approval admin
+        status: 'PENDING_VERIFICATION', // Status awal menunggu verifikasi dokumen
         legalStatus: 'NOT_SUBMITTED',
         totalMembers,
         submissionDate: new Date(), // Tanggal pengajuan
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       id: newKoperasi.id,
       name: newKoperasi.name,
       status: newKoperasi.status,
-      owner: newKoperasi.owner.name
+      ownerId: newKoperasi.ownerId
     });
 
     // Log aktivitas pengajuan
@@ -153,8 +153,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Pengajuan koperasi berhasil disubmit. Menunggu persetujuan admin.',
-      data: {
-        koperasiId: newKoperasi.id,
+      koperasi: {
+        id: newKoperasi.id,
         name: newKoperasi.name,
         status: newKoperasi.status,
         submissionDate: newKoperasi.submissionDate,

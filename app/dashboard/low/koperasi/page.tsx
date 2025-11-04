@@ -96,10 +96,16 @@ export default function KoperasiManagement() {
       const response = await fetch('/api/koperasi/register');
       if (response.ok) {
         const result = await response.json();
-        setKoperasiList(result.data || []);
+        // Ensure we always set an array
+        const dataArray = Array.isArray(result.data) ? result.data : 
+                         Array.isArray(result) ? result : [];
+        setKoperasiList(dataArray);
+      } else {
+        setKoperasiList([]);
       }
     } catch (error) {
       console.error('Error fetching koperasi list:', error);
+      setKoperasiList([]);
     }
   };
 
@@ -183,7 +189,7 @@ export default function KoperasiManagement() {
     return typeLabels[type as keyof typeof typeLabels] || type;
   };
 
-  const filteredKoperasi = koperasiList.filter(koperasi => {
+  const filteredKoperasi = (koperasiList || []).filter(koperasi => {
     const matchesSearch = koperasi.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          koperasi.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || koperasi.status === statusFilter;

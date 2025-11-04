@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, Search, Settings, User, ChevronDown, Shield, Building2, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -15,6 +16,7 @@ export default function Header({ userRole, onRoleChange, userName = 'Administrat
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
   console.log('Header component props:', { userName, onLogout: typeof onLogout });
 
@@ -127,19 +129,42 @@ export default function Header({ userRole, onRoleChange, userName = 'Administrat
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <div className="text-sm font-medium text-gray-900">{userName}</div>
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="text-sm font-semibold text-gray-900">{userName}</div>
                   <div className="text-xs text-gray-500">
                     {userRole === 'HIGH' ? 'Administrator Pusat' : 'Pengelola Koperasi'}
                   </div>
                 </div>
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                  Profil
+                <button 
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    if (userRole === 'LOW') {
+                      router.push('/dashboard/low/profile');
+                    } else {
+                      router.push('/dashboard/high/profile');
+                    }
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Profil</span>
                 </button>
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
-                  Pengaturan
+                <button 
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    if (userRole === 'LOW') {
+                      router.push('/dashboard/low/profile');
+                    } else {
+                      router.push('/dashboard/high/profile');
+                    }
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Pengaturan</span>
                 </button>
+                <div className="border-t border-gray-100 my-1"></div>
                 <button 
                   onClick={() => {
                     console.log('Logout button clicked');

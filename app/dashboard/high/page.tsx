@@ -14,6 +14,8 @@ import {
   Shield,
   AlertTriangle,
   Eye,
+  Download,
+  FileText,
   Filter
 } from 'lucide-react';
 
@@ -51,6 +53,9 @@ export default function HighDashboard() {
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedKoperasi, setSelectedKoperasi] = useState<KoperasiPending | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [koperasiDocuments, setKoperasiDocuments] = useState<any[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [summary, setSummary] = useState({
     pending: 0,
     approved_sehat: 0,
@@ -181,6 +186,75 @@ export default function HighDashboard() {
   const handleViewDetail = (koperasi: KoperasiPending) => {
     setSelectedKoperasi(koperasi);
     setShowDetailModal(true);
+    fetchKoperasiDocuments(koperasi.id);
+  };
+
+  const fetchKoperasiDocuments = async (koperasiId: string) => {
+    setLoadingDocuments(true);
+    try {
+      const response = await fetch(`/api/koperasi/documents/upload?koperasiId=${koperasiId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setKoperasiDocuments(data.documents || []);
+      } else {
+        setKoperasiDocuments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      setKoperasiDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handlePreviewDocument = (doc: any) => {
+    setPreviewDoc(doc);
+  };
+
+  const handleDownloadDocument = async (doc: any) => {
+    try {
+      const response = await fetch(`/api/koperasi/documents/download/${doc.id}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.originalName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('Gagal mengunduh dokumen');
+    }
+  };
+
+  const handleUpdateHealthStatus = async (koperasiId: string, newStatus: 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT') => {
+    try {
+      const response = await fetch('/api/koperasi/health-status', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          koperasiId,
+          status: newStatus
+        }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert(`Status kesehatan berhasil diubah menjadi ${newStatus === 'AKTIF_SEHAT' ? 'Sehat' : 'Tidak Sehat'}`);
+        await fetchKoperasiData(); // Refresh data
+      } else {
+        alert(result.error || 'Terjadi kesalahan saat mengubah status kesehatan');
+      }
+    } catch (error) {
+      console.error('Error updating health status:', error);
+      alert('Terjadi kesalahan jaringan');
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -296,6 +370,7 @@ export default function HighDashboard() {
             onApprove={handleApprove}
             onReject={handleReject}
             onView={handleViewDetail}
+            onUpdateHealthStatus={handleUpdateHealthStatus}
           />
         </div>
 
@@ -405,6 +480,156 @@ export default function HighDashboard() {
                   <h4 className="font-medium text-red-900 mb-2">Alasan Penolakan</h4>
                   <p className="text-red-800 text-sm">{selectedKoperasi.rejectionReason}</p>
                 </div>
+              )}
+
+              {/* Documents Section */}
+              <div className="border-t pt-6">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  Dokumen Persyaratan ({koperasiDocuments.length})
+                </h4>
+                
+                {loadingDocuments ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                    <p className="text-gray-600 mt-2">Memuat dokumen...</p>
+                  </div>
+                ) : koperasiDocuments.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {koperasiDocuments.map((doc: any) => (
+                      <div key={doc.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-gray-900 text-sm">
+                              {doc.documentType === 'AKTA_PENDIRIAN' && '1. Akta Pendirian Koperasi'}
+                              {doc.documentType === 'BERITA_ACARA' && '2. Berita Acara Rapat'}
+                              {doc.documentType === 'DAFTAR_PENDIRI' && '3. Daftar Nama & KTP'}
+                              {doc.documentType === 'BUKTI_SETORAN' && '4. Bukti Setoran Modal'}
+                            </h5>
+                            <p className="text-xs text-gray-500 mt-1">{doc.originalName}</p>
+                            <p className="text-xs text-gray-400">{(doc.fileSize / 1024).toFixed(0)} KB</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handlePreviewDocument(doc)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Preview"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadDocument(doc)}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          {doc.status === 'PENDING' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Menunggu Verifikasi
+                            </span>
+                          )}
+                          {doc.status === 'APPROVED' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Disetujui
+                            </span>
+                          )}
+                          {doc.status === 'REJECTED' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Ditolak
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600">Belum ada dokumen yang diupload</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              {selectedKoperasi.status !== 'AKTIF_SEHAT' && selectedKoperasi.status !== 'AKTIF_TIDAK_SEHAT' && selectedKoperasi.status !== 'DITOLAK' && (
+                <div className="border-t pt-6 flex gap-3 justify-end">
+                  <button
+                    onClick={() => {
+                      const reason = prompt('Alasan penolakan:');
+                      if (reason && reason.trim()) {
+                        handleReject(selectedKoperasi.id, reason);
+                        setShowDetailModal(false);
+                      }
+                    }}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Tolak
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Setujui dengan status Tidak Sehat?')) {
+                        handleApprove(selectedKoperasi.id, 'APPROVE_TIDAK_SEHAT');
+                        setShowDetailModal(false);
+                      }
+                    }}
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    Setujui - Tidak Sehat
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Setujui pengajuan ini dengan status Sehat?')) {
+                        handleApprove(selectedKoperasi.id, 'APPROVE_SEHAT');
+                        setShowDetailModal(false);
+                      }
+                    }}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Setujui - Sehat
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">{previewDoc.originalName}</h3>
+              <button
+                onClick={() => setPreviewDoc(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-gray-100">
+              {previewDoc.mimeType === 'application/pdf' ? (
+                <iframe
+                  src={`/api/koperasi/documents/view/${previewDoc.id}`}
+                  className="w-full h-full min-h-[600px] bg-white rounded"
+                  title="Document Preview"
+                />
+              ) : (
+                <img
+                  src={`/api/koperasi/documents/view/${previewDoc.id}`}
+                  alt={previewDoc.originalName}
+                  className="max-w-full h-auto mx-auto rounded shadow-lg"
+                />
               )}
             </div>
           </div>

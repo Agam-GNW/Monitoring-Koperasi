@@ -2,9 +2,45 @@ export type UserRole = 'HIGH' | 'LOW';
 
 export type KoperasiType = 'SIMPAN_PINJAM' | 'KONSUMSI' | 'PRODUKSI' | 'JASA' | 'SERBA_USAHA';
 
-export type KoperasiStatus = 'PENDING' | 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT' | 'TIDAK_DISETUJUI';
+export type KoperasiStatus = 
+  | 'PENDING_VERIFICATION'    // Menunggu verifikasi dokumen
+  | 'PENDING_SURVEY'          // Menunggu survei lokasi
+  | 'SURVEY_SCHEDULED'        // Survei dijadwalkan
+  | 'SURVEY_COMPLETED'        // Survei selesai
+  | 'PENDING_APPROVAL'        // Menunggu persetujuan akhir
+  | 'AKTIF_SEHAT'             // Disetujui dan sehat
+  | 'AKTIF_TIDAK_SEHAT'       // Disetujui tapi tidak sehat
+  | 'DITOLAK';                // Ditolak
 
 export type LegalStatus = 'LEGAL' | 'PENDING_REVIEW' | 'REJECTED' | 'NOT_SUBMITTED';
+
+export type DocumentType = 
+  | 'AKTA_PENDIRIAN'    // Akta Pendirian Koperasi (AD/ART)
+  | 'BERITA_ACARA'      // Berita Acara Rapat Pendirian
+  | 'DAFTAR_PENDIRI'    // Daftar Nama & KTP Pendiri
+  | 'BUKTI_SETORAN'     // Bukti Setoran Modal Awal
+  | 'SURAT_DOMISILI'    // Surat Keterangan Domisili
+  | 'NPWP'              // NPWP Koperasi
+  | 'OTHER';            // Dokumen Lainnya
+
+export type DocumentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'RESUBMIT';
+
+export interface DocumentRequirement {
+  id: string;
+  documentType: DocumentType;
+  fileName: string;
+  originalName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  status: DocumentStatus;
+  uploadDate: Date;
+  reviewDate?: Date;
+  reviewNotes?: string;
+  reviewedBy?: string;
+  isRequired: boolean;
+  koperasiId: string;
+}
 
 export interface User {
   id: string;
