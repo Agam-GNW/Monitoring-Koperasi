@@ -58,6 +58,9 @@ export default function LayoutWrapper({
         case 'dashboard':
           router.push('/dashboard/high');
           break;
+        case 'koperasi':
+          router.push('/dashboard/high/koperasi');
+          break;
         case 'dokumen':
           router.push('/dashboard/high/rat');
           break;

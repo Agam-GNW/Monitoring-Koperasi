@@ -28,7 +28,6 @@ export default function Sidebar({ userRole, activeSection, onSectionChange }: Si
   const highRoleMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'koperasi', label: 'Data Koperasi', icon: Building2 },
-    { id: 'anggota', label: 'Total Anggota', icon: Users },
     { id: 'kegiatan', label: 'Jadwal Kegiatan', icon: Calendar },
     { id: 'dokumen', label: 'Dokumen RAT', icon: FileText },
     { id: 'laporan', label: 'Laporan & Analitik', icon: BarChart3 },
