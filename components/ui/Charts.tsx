@@ -95,12 +95,11 @@ export function StatusOverviewChart({
     {
       name: 'Status Operasional',
       Aktif: activeCount,
-      'Non-Aktif': inactiveCount,
     },
     {
       name: 'Status Legal',
       Legal: legalCount,
-      'Pending': pendingLegalCount,
+      Pending: pendingLegalCount,
     },
   ];
 
@@ -118,7 +117,6 @@ export function StatusOverviewChart({
             <Tooltip />
             <Legend />
             <Bar dataKey="Aktif" fill="#10B981" />
-            <Bar dataKey="Non-Aktif" fill="#EF4444" />
             <Bar dataKey="Legal" fill="#3B82F6" />
             <Bar dataKey="Pending" fill="#F59E0B" />
           </BarChart>

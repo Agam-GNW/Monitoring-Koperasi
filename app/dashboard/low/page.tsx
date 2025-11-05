@@ -67,6 +67,7 @@ export default function LowDashboard() {
   const [savingStats, setSavingStats] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -113,6 +114,24 @@ export default function LowDashboard() {
     };
 
     fetchEvents();
+  }, []);
+
+  // Fetch dashboard stats
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const response = await fetch('/api/koperasi/dashboard-stats');
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Dashboard stats:', result);
+          setDashboardStats(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+
+    fetchDashboardStats();
   }, []);
 
   // Fetch statistics data
@@ -376,29 +395,6 @@ export default function LowDashboard() {
     );
   }
 
-  // Mock data for charts and tables (limited scope for registrar)
-  const registrarData = [
-    { type: 'KONSUMSI' as const, count: 15, percentage: 31.9 },
-    { type: 'SIMPAN_PINJAM' as const, count: 12, percentage: 25.5 },
-    { type: 'PRODUKSI' as const, count: 8, percentage: 17.0 },
-    { type: 'JASA' as const, count: 7, percentage: 14.9 },
-    { type: 'SERBA_USAHA' as const, count: 5, percentage: 10.6 },
-  ];
-
-  // Convert events to activities format
-  const activities = events.map(event => ({
-    id: event.id,
-    title: event.title,
-    description: event.description || `${event.organizer} - ${event.location}`,
-    date: new Date(`${event.eventDate}T${event.startTime}`),
-    type: 'EVENT' as const,
-    status: event.status === 'UPCOMING' ? 'PLANNED' as const : 
-            event.status === 'ONGOING' ? 'IN_PROGRESS' as const :
-            event.status === 'COMPLETED' ? 'COMPLETED' as const :
-            'CANCELLED' as const,
-    koperasiId: user?.ownedKoperasi?.id || '1',
-  }));
-
   return (
     <LayoutWrapper 
       userRole="LOW" 
@@ -550,19 +546,35 @@ export default function LowDashboard() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Distribusi Jenis Koperasi (Wilayah)
             </h3>
-            <TypeDistributionChart data={registrarData} />
+            {!dashboardStats ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : dashboardStats.typeDistribution.length === 0 ? (
+              <div className="h-80 flex items-center justify-center text-gray-500">
+                Belum ada data koperasi
+              </div>
+            ) : (
+              <TypeDistributionChart data={dashboardStats.typeDistribution} />
+            )}
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Status Koperasi Wilayah
             </h3>
-            <StatusOverviewChart 
-              activeCount={47}
-              inactiveCount={0}
-              legalCount={47}
-              pendingLegalCount={0}
-            />
+            {!dashboardStats ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <StatusOverviewChart 
+                activeCount={dashboardStats.status.aktifSehat}
+                inactiveCount={dashboardStats.status.aktifTidakSehat}
+                legalCount={dashboardStats.legal.legal}
+                pendingLegalCount={dashboardStats.legal.pendingLegal}
+              />
+            )}
           </div>
         </div>
 
