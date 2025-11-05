@@ -44,10 +44,12 @@ export default function LayoutWrapper({
         case 'anggota-koperasi':
           router.push('/dashboard/low/members');
           break;
+        case 'upload-rat':
+          router.push('/dashboard/low/koperasi/rat');
+          break;
         case 'pengaturan':
           router.push('/dashboard/low/profile');
           break;
-        // Add more navigation cases as needed
         default:
           break;
       }
@@ -56,7 +58,12 @@ export default function LayoutWrapper({
         case 'dashboard':
           router.push('/dashboard/high');
           break;
-        // Add more navigation cases as needed
+        case 'dokumen':
+          router.push('/dashboard/high/rat');
+          break;
+        case 'pengaturan':
+          router.push('/dashboard/high/profile');
+          break;
         default:
           break;
       }

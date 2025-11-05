@@ -21,6 +21,7 @@ export type DocumentType =
   | 'BUKTI_SETORAN'     // Bukti Setoran Modal Awal
   | 'SURAT_DOMISILI'    // Surat Keterangan Domisili
   | 'NPWP'              // NPWP Koperasi
+  | 'RAT'               // Rapat Anggota Tahunan
   | 'OTHER';            // Dokumen Lainnya
 
 export type DocumentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'RESUBMIT';

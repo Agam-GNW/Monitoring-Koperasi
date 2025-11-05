@@ -11,7 +11,8 @@ import {
   Settings, 
   Plus,
   ChevronRight,
-  Home
+  Home,
+  User
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -31,7 +32,7 @@ export default function Sidebar({ userRole, activeSection, onSectionChange }: Si
     { id: 'kegiatan', label: 'Jadwal Kegiatan', icon: Calendar },
     { id: 'dokumen', label: 'Dokumen RAT', icon: FileText },
     { id: 'laporan', label: 'Laporan & Analitik', icon: BarChart3 },
-    { id: 'pengaturan', label: 'Pengaturan', icon: Settings },
+    { id: 'pengaturan', label: 'Profile', icon: User },
   ];
 
   const lowRoleMenuItems = [
@@ -39,7 +40,7 @@ export default function Sidebar({ userRole, activeSection, onSectionChange }: Si
     { id: 'koperasi', label: 'Kelola Koperasi', icon: Building2 },
     { id: 'anggota-koperasi', label: 'Anggota Koperasi', icon: Users },
     { id: 'upload-rat', label: 'Upload RAT', icon: FileText },
-    { id: 'pengaturan', label: 'Pengaturan', icon: Settings },
+    { id: 'pengaturan', label: 'Profile', icon: User },
   ];
 
   const menuItems = userRole === 'HIGH' ? highRoleMenuItems : lowRoleMenuItems;

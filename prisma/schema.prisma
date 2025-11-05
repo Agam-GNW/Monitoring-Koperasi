@@ -73,6 +73,7 @@ enum DocumentType {
   BUKTI_SETORAN         // Bukti Setoran Modal Awal
   SURAT_DOMISILI        // Surat Keterangan Domisili
   NPWP                  // NPWP Koperasi
+  RAT                   // Rapat Anggota Tahunan
   OTHER                 // Dokumen Lainnya
 }
 
@@ -82,8 +83,10 @@ model User {
   name          String
   password      String
   role          UserRole  @default(LOW)
+  phone         String?   // Phone number
   emailVerified DateTime?
   image         String?
+  profileImage  String?   // Path to profile photo
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
