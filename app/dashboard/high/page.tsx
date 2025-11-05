@@ -192,7 +192,7 @@ export default function HighDashboard() {
   const fetchKoperasiDocuments = async (koperasiId: string) => {
     setLoadingDocuments(true);
     try {
-      const response = await fetch(`/api/koperasi/documents/upload?koperasiId=${koperasiId}`);
+      const response = await fetch(`/api/koperasi/documents/list?koperasiId=${koperasiId}`);
       if (response.ok) {
         const data = await response.json();
         setKoperasiDocuments(data.documents || []);
@@ -233,26 +233,26 @@ export default function HighDashboard() {
 
   const handleUpdateHealthStatus = async (koperasiId: string, newStatus: 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT') => {
     try {
-      const response = await fetch('/api/koperasi/health-status', {
-        method: 'PUT',
+      const response = await fetch(`/api/koperasi/${koperasiId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
-          koperasiId,
           status: newStatus
         }),
       });
 
       const result = await response.json();
       if (response.ok) {
-        alert(`Status kesehatan berhasil diubah menjadi ${newStatus === 'AKTIF_SEHAT' ? 'Sehat' : 'Tidak Sehat'}`);
+        alert(`Status koperasi berhasil diubah menjadi ${newStatus === 'AKTIF_SEHAT' ? 'Aktif - Sehat' : 'Aktif - Tidak Sehat'}`);
         await fetchKoperasiData(); // Refresh data
       } else {
-        alert(result.error || 'Terjadi kesalahan saat mengubah status kesehatan');
+        alert(result.error || 'Terjadi kesalahan saat mengubah status');
       }
     } catch (error) {
-      console.error('Error updating health status:', error);
+      console.error('Error updating status:', error);
       alert('Terjadi kesalahan jaringan');
     }
   };
@@ -498,13 +498,16 @@ export default function HighDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {koperasiDocuments.map((doc: any) => (
                       <div key={doc.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h5 className="font-medium text-gray-900 text-sm">
                               {doc.documentType === 'AKTA_PENDIRIAN' && '1. Akta Pendirian Koperasi'}
                               {doc.documentType === 'BERITA_ACARA' && '2. Berita Acara Rapat'}
                               {doc.documentType === 'DAFTAR_PENDIRI' && '3. Daftar Nama & KTP'}
                               {doc.documentType === 'BUKTI_SETORAN' && '4. Bukti Setoran Modal'}
+                              {doc.documentType === 'SURAT_DOMISILI' && '5. Surat Domisili'}
+                              {doc.documentType === 'NPWP' && '6. NPWP Koperasi'}
+                              {doc.documentType === 'OTHER' && 'Dokumen Lainnya'}
                             </h5>
                             <p className="text-xs text-gray-500 mt-1">{doc.originalName}</p>
                             <p className="text-xs text-gray-400">{(doc.fileSize / 1024).toFixed(0)} KB</p>
@@ -525,26 +528,6 @@ export default function HighDashboard() {
                               <Download className="w-4 h-4" />
                             </button>
                           </div>
-                        </div>
-                        <div className="mt-2">
-                          {doc.status === 'PENDING' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Menunggu Verifikasi
-                            </span>
-                          )}
-                          {doc.status === 'APPROVED' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Disetujui
-                            </span>
-                          )}
-                          {doc.status === 'REJECTED' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Ditolak
-                            </span>
-                          )}
                         </div>
                       </div>
                     ))}

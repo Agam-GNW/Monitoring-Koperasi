@@ -287,3 +287,81 @@ export async function DELETE(
     }, { status: 500 });
   }
 }
+
+// PATCH - Update status koperasi (untuk role HIGH/admin)
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    const body = await request.json();
+    
+    // Authentication check
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Get user to verify role
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Only HIGH (admin) users can update status
+    if (user.role !== 'HIGH') {
+      return NextResponse.json({ error: 'Forbidden: Only admin can update status' }, { status: 403 });
+    }
+
+    const { status } = body;
+
+    if (!status || !['AKTIF_SEHAT', 'AKTIF_TIDAK_SEHAT'].includes(status)) {
+      return NextResponse.json(
+        { error: 'Status harus AKTIF_SEHAT atau AKTIF_TIDAK_SEHAT' },
+        { status: 400 }
+      );
+    }
+
+    // Update koperasi status
+    const updatedKoperasi = await prisma.koperasi.update({
+      where: { id },
+      data: { status },
+    });
+
+    // Log aktivitas update status
+    await prisma.activity.create({
+      data: {
+        title: 'Perubahan Status Koperasi',
+        description: `Status koperasi ${updatedKoperasi.name} diubah menjadi ${status === 'AKTIF_SEHAT' ? 'Aktif - Sehat' : 'Aktif - Tidak Sehat'} oleh admin`,
+        date: new Date(),
+        type: 'OTHER',
+        status: 'COMPLETED',
+        koperasiId: id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Status koperasi berhasil diubah',
+      data: updatedKoperasi
+    });
+
+  } catch (error) {
+    console.error('Error updating status:', error);
+    
+    return NextResponse.json({
+      error: 'Terjadi kesalahan saat mengubah status koperasi'
+    }, { status: 500 });
+  }
+}

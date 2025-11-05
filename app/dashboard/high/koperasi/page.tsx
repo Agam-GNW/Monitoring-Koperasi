@@ -59,6 +59,8 @@ export default function KoperasiListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT'>('ALL');
   const [filterType, setFilterType] = useState<string>('ALL');
+  const [koperasiDocuments, setKoperasiDocuments] = useState<any[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -146,9 +148,51 @@ export default function KoperasiListPage() {
     }
   };
 
-  const handleViewDetail = (koperasi: Koperasi) => {
+  const handleViewDetail = async (koperasi: Koperasi) => {
     setSelectedKoperasi(koperasi);
     setShowDetailModal(true);
+    
+    // Fetch documents for this koperasi
+    setLoadingDocuments(true);
+    try {
+      const response = await fetch(`/api/koperasi/documents/list?koperasiId=${koperasi.id}`);
+      if (response.ok) {
+        const result = await response.json();
+        setKoperasiDocuments(result.documents || []);
+      } else {
+        setKoperasiDocuments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      setKoperasiDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleUpdateStatus = async (koperasiId: string, newStatus: 'AKTIF_SEHAT' | 'AKTIF_TIDAK_SEHAT') => {
+    try {
+      const response = await fetch(`/api/koperasi/${koperasiId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        alert('Status koperasi berhasil diubah');
+        await fetchKoperasiData(); // Refresh data
+        setShowDetailModal(false);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Gagal mengubah status koperasi');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Terjadi kesalahan saat mengubah status');
+    }
   };
 
   const formatDate = (date: Date | undefined) => {
@@ -530,14 +574,132 @@ export default function KoperasiListPage() {
                 </div>
               )}
 
+              {/* Documents */}
+              <div className="border-t border-gray-200 pt-6">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-red-600" />
+                  Dokumen Pendaftaran
+                </h4>
+                {loadingDocuments ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">Memuat dokumen...</p>
+                  </div>
+                ) : koperasiDocuments.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Belum ada dokumen yang diupload</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {koperasiDocuments.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-3 flex-1">
+                          <FileText className="w-5 h-5 text-red-600" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{doc.originalName}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-500">
+                                {doc.documentType === 'AKTA_PENDIRIAN' ? 'Akta Pendirian' :
+                                 doc.documentType === 'BERITA_ACARA' ? 'Berita Acara' :
+                                 doc.documentType === 'DAFTAR_PENDIRI' ? 'Daftar Pendiri' :
+                                 doc.documentType === 'BUKTI_SETORAN' ? 'Bukti Setoran' :
+                                 doc.documentType === 'SURAT_DOMISILI' ? 'Surat Domisili' :
+                                 doc.documentType === 'NPWP' ? 'NPWP' :
+                                 doc.documentType}
+                              </span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-gray-500">
+                                {(doc.fileSize / 1024).toFixed(2)} KB
+                              </span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                doc.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                doc.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                doc.status === 'RESUBMIT' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-blue-100 text-blue-700'
+                              }`}>
+                                {doc.status === 'APPROVED' ? 'Disetujui' :
+                                 doc.status === 'REJECTED' ? 'Ditolak' :
+                                 doc.status === 'RESUBMIT' ? 'Perlu Resubmit' :
+                                 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => window.open(`/api/koperasi/documents/view/${doc.id}`, '_blank')}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Lihat Dokumen"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => window.open(`/api/koperasi/documents/download/${doc.id}`, '_blank')}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                            title="Download Dokumen"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Actions */}
-              <div className="border-t border-gray-200 pt-6 flex justify-end">
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                >
-                  Tutup
-                </button>
+              <div className="border-t border-gray-200 pt-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ubah Status Koperasi
+                  </label>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        if (confirm('Ubah status koperasi menjadi Aktif - Sehat?')) {
+                          handleUpdateStatus(selectedKoperasi.id, 'AKTIF_SEHAT');
+                        }
+                      }}
+                      className={`flex-1 px-4 py-2 rounded-md transition-colors ${
+                        selectedKoperasi.status === 'AKTIF_SEHAT'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Aktif - Sehat</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Ubah status koperasi menjadi Aktif - Tidak Sehat?')) {
+                          handleUpdateStatus(selectedKoperasi.id, 'AKTIF_TIDAK_SEHAT');
+                        }
+                      }}
+                      className={`flex-1 px-4 py-2 rounded-md transition-colors ${
+                        selectedKoperasi.status === 'AKTIF_TIDAK_SEHAT'
+                          ? 'bg-yellow-600 text-white'
+                          : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>Aktif - Tidak Sehat</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Tutup
+                  </button>
+                </div>
               </div>
             </div>
           </div>

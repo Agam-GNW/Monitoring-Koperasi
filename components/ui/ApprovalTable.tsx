@@ -309,7 +309,7 @@ export function ApprovalTable({ data, onApprove, onReject, onView, onUpdateHealt
                       className="mr-3"
                     />
                     <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                    <span className="font-medium">Koperasi Sehat</span>
+                    <span className="font-medium text-gray-900">Koperasi Sehat</span>
                   </label>
                   <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                     style={{ borderColor: newHealthStatus === 'AKTIF_TIDAK_SEHAT' ? '#f59e0b' : '#e5e7eb' }}>
@@ -322,7 +322,7 @@ export function ApprovalTable({ data, onApprove, onReject, onView, onUpdateHealt
                       className="mr-3"
                     />
                     <XCircle className="w-5 h-5 text-orange-600 mr-2" />
-                    <span className="font-medium">Koperasi Tidak Sehat</span>
+                    <span className="font-medium text-gray-900">Koperasi Tidak Sehat</span>
                   </label>
                 </div>
               </div>
