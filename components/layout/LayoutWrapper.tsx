@@ -47,6 +47,9 @@ export default function LayoutWrapper({
         case 'upload-rat':
           router.push('/dashboard/low/koperasi/rat');
           break;
+        case 'kegiatan':
+          router.push('/dashboard/low/kegiatan');
+          break;
         case 'pengaturan':
           router.push('/dashboard/low/profile');
           break;
@@ -60,6 +63,9 @@ export default function LayoutWrapper({
           break;
         case 'koperasi':
           router.push('/dashboard/high/koperasi');
+          break;
+        case 'kegiatan':
+          router.push('/dashboard/high/kegiatan');
           break;
         case 'dokumen':
           router.push('/dashboard/high/rat');

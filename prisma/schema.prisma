@@ -59,6 +59,13 @@ enum ActivityStatus {
   CANCELLED
 }
 
+enum EventStatus {
+  UPCOMING    // Akan datang
+  ONGOING     // Sedang berlangsung
+  COMPLETED   // Selesai
+  CANCELLED   // Dibatalkan
+}
+
 enum DocumentStatus {
   PENDING     // Menunggu verifikasi
   APPROVED    // Dokumen disetujui
@@ -219,4 +226,24 @@ model Document {
   updatedAt      DateTime       @updatedAt
 
   @@map("documents")
+}
+
+model Event {
+  id              String      @id @default(cuid())
+  title           String      // Nama kegiatan
+  description     String?     // Deskripsi kegiatan
+  eventDate       DateTime    // Tanggal kegiatan
+  startTime       String      // Waktu mulai (format HH:mm)
+  endTime         String      // Waktu selesai (format HH:mm)
+  location        String      // Tempat/lokasi
+  organizer       String      // Nama pelaksana/penyelenggara
+  status          EventStatus @default(UPCOMING)
+  maxParticipants Int?        // Kuota peserta (opsional)
+  
+  // Audit fields
+  createdBy       String      // User ID yang membuat (admin)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("events")
 }

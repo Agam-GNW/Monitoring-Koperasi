@@ -66,6 +66,7 @@ export default function LowDashboard() {
   });
   const [savingStats, setSavingStats] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
+  const [events, setEvents] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -93,6 +94,26 @@ export default function LowDashboard() {
 
     fetchUser();
   }, [router]);
+
+  // Fetch events data
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events?upcoming=true');
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Fetched events:', result);
+          setEvents(result.data || []);
+        } else {
+          console.error('Failed to fetch events:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   // Fetch statistics data
   useEffect(() => {
@@ -364,26 +385,19 @@ export default function LowDashboard() {
     { type: 'SERBA_USAHA' as const, count: 5, percentage: 10.6 },
   ];
 
-  const activities = [
-    {
-      id: '1',
-      title: 'Pendaftaran Koperasi Baru',
-      description: 'Koperasi yang Anda daftarkan berhasil diaktifkan',
-      date: new Date('2024-03-15T10:30:00Z'),
-      type: 'EVENT' as const,
-      status: 'COMPLETED' as const,
-      koperasiId: user?.ownedKoperasi?.id || '1',
-    },
-    {
-      id: '2',
-      title: 'Update Data Anggota',
-      description: 'Data anggota koperasi Anda telah diperbarui',
-      date: new Date('2024-03-14T14:20:00Z'),
-      type: 'OTHER' as const,
-      status: 'COMPLETED' as const,
-      koperasiId: user?.ownedKoperasi?.id || '1',
-    },
-  ];
+  // Convert events to activities format
+  const activities = events.map(event => ({
+    id: event.id,
+    title: event.title,
+    description: event.description || `${event.organizer} - ${event.location}`,
+    date: new Date(`${event.eventDate}T${event.startTime}`),
+    type: 'EVENT' as const,
+    status: event.status === 'UPCOMING' ? 'PLANNED' as const : 
+            event.status === 'ONGOING' ? 'IN_PROGRESS' as const :
+            event.status === 'COMPLETED' ? 'COMPLETED' as const :
+            'CANCELLED' as const,
+    koperasiId: user?.ownedKoperasi?.id || '1',
+  }));
 
   return (
     <LayoutWrapper 
@@ -572,20 +586,100 @@ export default function LowDashboard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Aktivitas Terbaru
-                </h3>
+          <div>
+            <div className="bg-white rounded-xl shadow-sm">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Jadwal Kegiatan Mendatang
+                  </h3>
+                  <button 
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    onClick={() => router.push('/dashboard/low/kegiatan')}
+                  >
+                    Lihat Semua
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {events.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Tidak ada kegiatan yang dijadwalkan</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {events.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id}
+                        className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              {event.title}
+                            </h4>
+                            {event.description && (
+                              <p className="text-sm text-gray-600 mb-2">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            event.status === 'UPCOMING' ? 'bg-blue-100 text-blue-800' :
+                            event.status === 'ONGOING' ? 'bg-green-100 text-green-800' :
+                            event.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {event.status === 'UPCOMING' ? 'Akan Datang' :
+                             event.status === 'ONGOING' ? 'Berlangsung' :
+                             event.status === 'COMPLETED' ? 'Selesai' :
+                             'Dibatalkan'}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>{new Date(event.eventDate).toLocaleDateString('id-ID', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>{event.startTime} - {event.endTime}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            <span>{event.location}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            <span>Penyelenggara: {event.organizer}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {events.length > 5 && (
+                      <div className="text-center pt-4">
+                        <button 
+                          onClick={() => router.push('/dashboard/low/kegiatan')}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          Lihat {events.length - 5} kegiatan lainnya
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-            <ActivityList 
-              activities={activities}
-              koperasiData={koperasiData || []}
-              userRole="LOW"
-            />
           </div>
         </div>
 

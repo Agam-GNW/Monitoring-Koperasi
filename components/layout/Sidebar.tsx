@@ -38,6 +38,7 @@ export default function Sidebar({ userRole, activeSection, onSectionChange }: Si
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'koperasi', label: 'Kelola Koperasi', icon: Building2 },
     { id: 'anggota-koperasi', label: 'Anggota Koperasi', icon: Users },
+    { id: 'kegiatan', label: 'Jadwal Kegiatan', icon: Calendar },
     { id: 'upload-rat', label: 'Upload RAT', icon: FileText },
     { id: 'pengaturan', label: 'Profile', icon: User },
   ];
