@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Building2, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -75,8 +76,15 @@ export default function RegisterPage() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4 shadow-lg">
-              <Building2 className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center mb-4">
+              <Image
+                src="/logo-dinkukmdagin.png"
+                alt="Logo DINKUKMDAGIN"
+                width={250}
+                height={250}
+                className="object-contain"
+                priority
+              />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-4 font-inter">
               Registrasi Berhasil!
@@ -97,8 +105,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4 shadow-lg">
-            <Building2 className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <Image
+              src="/logo-dinkukmdagin.png"
+              alt="Logo DINKUKMDAGIN"
+              width={250}
+              height={250}
+              className="object-contain"
+              priority
+            />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2 font-inter">
             Daftar Akun Baru

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { 
   LayoutDashboard, 
   Building2, 
@@ -50,6 +51,23 @@ export default function Sidebar({ userRole, activeSection, onSectionChange }: Si
       "bg-white border-r border-gray-200 transition-all duration-300 h-screen flex flex-col",
       isCollapsed ? "w-16" : "w-64"
     )}>
+      {/* Logo Section */}
+      <div className={clsx(
+        "p-3 border-b border-gray-200 flex items-center",
+        isCollapsed ? "justify-center" : "justify-center"
+      )}>
+        <div className="flex items-center">
+          <Image
+            src="/Koperasi-logo.png"
+            alt="Logo Koperasi"
+            width={isCollapsed ? 40 : 80}
+            height={isCollapsed ? 40 : 80}
+            className="object-contain"
+            priority
+          />
+        </div>
+      </div>
+
       {/* Toggle Button */}
       <div className="p-4 border-b border-gray-200">
         <button

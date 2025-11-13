@@ -12,7 +12,8 @@ module.exports = {
         foreground: 'var(--foreground)',
       },
       fontFamily: {
-        inter: ['var(--font-inter)', 'sans-serif'],
+        poppins: ['var(--font-poppins)', 'sans-serif'],
+        sans: ['var(--font-poppins)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },

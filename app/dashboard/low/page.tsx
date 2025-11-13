@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import { KoperasiTable } from '../../../components/ui/KoperasiTable';
 import { ActivityList } from '../../../components/ui/ActivityList';
-import { TypeDistributionChart, StatusOverviewChart } from '../../../components/ui/Charts';
 
 interface User {
   id: string;
@@ -67,7 +66,8 @@ export default function LowDashboard() {
   const [savingStats, setSavingStats] = useState(false);
   const [resubmitting, setResubmitting] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [members, setMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -116,22 +116,23 @@ export default function LowDashboard() {
     fetchEvents();
   }, []);
 
-  // Fetch dashboard stats
+  // Fetch members data
   useEffect(() => {
-    const fetchDashboardStats = async () => {
+    const fetchMembers = async () => {
       try {
-        const response = await fetch('/api/koperasi/dashboard-stats');
+        const response = await fetch('/api/koperasi/members');
         if (response.ok) {
           const result = await response.json();
-          console.log('Dashboard stats:', result);
-          setDashboardStats(result.data);
+          setMembers(result.data || []);
         }
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        console.error('Error fetching members:', error);
+      } finally {
+        setLoadingMembers(false);
       }
     };
 
-    fetchDashboardStats();
+    fetchMembers();
   }, []);
 
   // Fetch statistics data
@@ -155,7 +156,11 @@ export default function LowDashboard() {
   }, [user]);
 
   const handleEditStats = () => {
-    setStatsForm({ ...stats });
+    // Set activeMembers from actual members count
+    setStatsForm({ 
+      ...stats,
+      activeMembers: members.length 
+    });
     setShowStatsModal(true);
   };
 
@@ -163,18 +168,30 @@ export default function LowDashboard() {
     setSavingStats(true);
     try {
       const response = await fetch('/api/koperasi/stats', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(statsForm),
+        body: JSON.stringify({
+          totalFunds: statsForm.totalFunds,
+          activeMembers: members.length, // Use actual members count
+          monthlyTransactions: statsForm.monthlyTransactions
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         setStats(data.stats);
         setShowStatsModal(false);
+        alert('Statistik berhasil disimpan');
       } else {
-        const error = await response.json();
-        alert(error.message || 'Gagal menyimpan statistik');
+        let errorMessage = 'Gagal menyimpan statistik';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || error.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use default message
+          errorMessage = `Gagal menyimpan statistik (${response.status})`;
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error saving stats:', error);
@@ -501,17 +518,17 @@ export default function LowDashboard() {
                 <div>
                   <p className="text-sm text-gray-600">Jumlah Anggota Aktif</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.activeMembers}
+                    {members.length}
                   </p>
                 </div>
               </div>
             </div>
             <button
-              onClick={handleEditStats}
+              onClick={() => router.push('/dashboard/low/members')}
               className="w-full mt-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
-              <TrendingUp className="w-4 h-4" />
-              Edit Statistik
+              <Users className="w-4 h-4" />
+              Kelola Anggota
             </button>
           </div>
 
@@ -540,61 +557,85 @@ export default function LowDashboard() {
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Distribusi Jenis Koperasi (Wilayah)
-            </h3>
-            {!dashboardStats ? (
-              <div className="h-80 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              </div>
-            ) : dashboardStats.typeDistribution.length === 0 ? (
-              <div className="h-80 flex items-center justify-center text-gray-500">
-                Belum ada data koperasi
-              </div>
-            ) : (
-              <TypeDistributionChart data={dashboardStats.typeDistribution} />
-            )}
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Status Koperasi Wilayah
-            </h3>
-            {!dashboardStats ? (
-              <div className="h-80 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              </div>
-            ) : (
-              <StatusOverviewChart 
-                activeCount={dashboardStats.status.aktifSehat}
-                inactiveCount={dashboardStats.status.aktifTidakSehat}
-                legalCount={dashboardStats.legal.legal}
-                pendingLegalCount={dashboardStats.legal.pendingLegal}
-              />
-            )}
-          </div>
-        </div>
-
         {/* Recent Activities & Koperasi Table */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Koperasi di Wilayah Anda
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Informasi Anggota Koperasi
                   </h3>
                   <button className="text-green-600 hover:text-green-700 text-sm font-medium"
-                    onClick={() => router.push('/dashboard/low/koperasi/manage')}
+                    onClick={() => router.push('/dashboard/low/members')}
                   >
                     Kelola Semua
                   </button>
                 </div>
               </div>
-              <KoperasiTable data={koperasiData || []} userRole="LOW" />
+              <div className="p-6">
+                {loadingMembers ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-4">Memuat data anggota...</p>
+                  </div>
+                ) : members.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      Belum Ada Anggota
+                    </h4>
+                    <p className="text-gray-600 mb-4">
+                      Tambahkan anggota koperasi untuk memulai
+                    </p>
+                    <button
+                      onClick={() => router.push('/dashboard/low/members')}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Tambah Anggota
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {members.slice(0, 3).map((member: any, index: number) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-semibold text-blue-600">{index + 1}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{member.name}</p>
+                            <p className="text-sm text-gray-600">
+                              {member.memberNumber || 'No. Anggota: -'} • {member.phone || 'No telepon belum diisi'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">
+                            {member.gender || '-'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {member.dateOfBirth ? new Date(member.dateOfBirth).toLocaleDateString('id-ID') : '-'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {members.length > 3 && (
+                      <div className="text-center pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => router.push('/dashboard/low/members')}
+                          className="w-full py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                        >
+                          <Users className="w-4 h-4" />
+                          Selengkapnya ({members.length - 3} anggota lainnya)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -765,12 +806,18 @@ export default function LowDashboard() {
                 )}
               </div>
             )}
-            <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
+            <button 
+              onClick={() => router.push('/dashboard/low/profile')}
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            >
               <Edit className="w-8 h-8 text-blue-600 mb-2" />
               <h4 className="font-medium text-gray-900">Update Data</h4>
               <p className="text-sm text-gray-600">Edit informasi koperasi existing</p>
             </button>
-            <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
+            <button 
+              onClick={() => router.push('/dashboard/low/koperasi/rat')}
+              className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+            >
               <FileText className="w-8 h-8 text-purple-600 mb-2" />
               <h4 className="font-medium text-gray-900">Upload Dokumen</h4>
               <p className="text-sm text-gray-600">Upload RAT dan dokumen legal</p>
@@ -825,7 +872,7 @@ export default function LowDashboard() {
                     type="number"
                     value={statsForm.totalFunds}
                     onChange={(e) => setStatsForm({ ...statsForm, totalFunds: parseFloat(e.target.value) || 0 })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="0"
                     min="0"
                     step="1000"
@@ -842,14 +889,16 @@ export default function LowDashboard() {
                   <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="number"
-                    value={statsForm.activeMembers}
-                    onChange={(e) => setStatsForm({ ...statsForm, activeMembers: parseInt(e.target.value) || 0 })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={members.length}
+                    readOnly
+                    disabled
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900 cursor-not-allowed"
                     placeholder="0"
-                    min="0"
-                    step="1"
                   />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Otomatis dari data anggota koperasi ({members.length} anggota)
+                </p>
               </div>
 
               {/* Transaksi Bulan Ini */}
@@ -863,7 +912,7 @@ export default function LowDashboard() {
                     type="number"
                     value={statsForm.monthlyTransactions}
                     onChange={(e) => setStatsForm({ ...statsForm, monthlyTransactions: parseFloat(e.target.value) || 0 })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     placeholder="0"
                     min="0"
                     step="1000"

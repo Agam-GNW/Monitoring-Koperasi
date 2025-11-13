@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import LayoutWrapper from '../../../components/layout/LayoutWrapper';
 import { StatCard } from '../../../components/ui/StatCard';
 import { ApprovalTable } from '../../../components/ui/ApprovalTable';
+import { TypeDistributionChart, StatusOverviewChart } from '../../../components/ui/Charts';
 import { 
   Building2, 
   Clock,
@@ -62,6 +63,7 @@ export default function HighDashboard() {
     approved_tidak_sehat: 0,
     rejected: 0
   });
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -89,6 +91,24 @@ export default function HighDashboard() {
 
     fetchUser();
   }, [router]);
+
+  // Fetch dashboard stats
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const response = await fetch('/api/koperasi/dashboard-stats');
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Dashboard stats:', result);
+          setDashboardStats(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
 
   const fetchKoperasiData = async () => {
     try {
@@ -338,6 +358,44 @@ export default function HighDashboard() {
           ))}
         </div>
 
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Distribusi Jenis Koperasi
+            </h3>
+            {!dashboardStats ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : dashboardStats.typeDistribution.length === 0 ? (
+              <div className="h-80 flex items-center justify-center text-gray-500">
+                Belum ada data koperasi
+              </div>
+            ) : (
+              <TypeDistributionChart data={dashboardStats.typeDistribution} />
+            )}
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Status Koperasi
+            </h3>
+            {!dashboardStats ? (
+              <div className="h-80 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <StatusOverviewChart 
+                activeCount={dashboardStats.status.aktifSehat}
+                inactiveCount={dashboardStats.status.aktifTidakSehat}
+                legalCount={dashboardStats.legal.legal}
+                pendingLegalCount={dashboardStats.legal.pendingLegal}
+              />
+            )}
+          </div>
+        </div>
+
         {/* Filter and Table */}
         <div className="space-y-4">
           <div className="bg-white rounded-xl shadow-sm p-4">
@@ -541,7 +599,7 @@ export default function HighDashboard() {
               </div>
 
               {/* Action Buttons */}
-              {selectedKoperasi.status !== 'AKTIF_SEHAT' && selectedKoperasi.status !== 'AKTIF_TIDAK_SEHAT' && selectedKoperasi.status !== 'DITOLAK' && (
+              {selectedKoperasi.status !== 'AKTIF_SEHAT' && selectedKoperasi.status !== 'AKTIF_TIDAK_SEHAT' && selectedKoperasi.status !== 'TIDAK_DISETUJUI' && (
                 <div className="border-t pt-6 flex gap-3 justify-end">
                   <button
                     onClick={() => {

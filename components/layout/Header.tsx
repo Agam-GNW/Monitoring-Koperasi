@@ -23,16 +23,11 @@ export default function Header({ userRole, onRoleChange, userName = 'Administrat
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Logo and Title */}
+        {/* Title */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Dashboard Koperasi</h1>
-              <p className="text-sm text-gray-500">Sistem Monitoring & Manajemen</p>
-            </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Dashboard Koperasi</h1>
+            <p className="text-sm text-gray-500">Sistem Monitoring & Manajemen</p>
           </div>
         </div>
 
