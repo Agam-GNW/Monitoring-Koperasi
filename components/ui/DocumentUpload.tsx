@@ -35,22 +35,29 @@ export function DocumentUpload({ koperasiId, onUploadComplete, documents = [] }:
   const [uploading, setUploading] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<UploadedDocument | null>(null);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>(documents);
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
   const getDocumentByType = (type: string) => {
-    return documents.find(doc => doc.documentType === type);
+    return uploadedDocs.find(doc => doc.documentType === type);
   };
 
   const handleFileSelect = async (type: string, file: File) => {
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
-      alert('Hanya file PDF, JPG, atau PNG yang diperbolehkan');
+      showNotification('error', 'Hanya file PDF, JPG, atau PNG yang diperbolehkan');
       return;
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      alert('Ukuran file maksimal 5MB');
+      showNotification('error', 'Ukuran file maksimal 5MB');
       return;
     }
 
@@ -68,16 +75,22 @@ export function DocumentUpload({ koperasiId, onUploadComplete, documents = [] }:
       });
 
       if (response.ok) {
-        if (onUploadComplete) {
-          onUploadComplete();
+        const result = await response.json();
+        // Add uploaded document to state
+        if (result.document) {
+          setUploadedDocs(prev => {
+            const filtered = prev.filter(doc => doc.documentType !== type);
+            return [...filtered, result.document];
+          });
         }
+        showNotification('success', 'Dokumen berhasil diupload!');
       } else {
         const error = await response.json();
-        alert(`Gagal upload: ${error.error}`);
+        showNotification('error', `Gagal upload: ${error.error}`);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Terjadi kesalahan saat upload file');
+      showNotification('error', 'Terjadi kesalahan saat upload file');
     } finally {
       setUploading(null);
     }
@@ -128,10 +141,13 @@ export function DocumentUpload({ koperasiId, onUploadComplete, documents = [] }:
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        showNotification('success', 'Dokumen berhasil didownload!');
+      } else {
+        showNotification('error', 'Gagal mendownload dokumen');
       }
     } catch (error) {
       console.error('Error downloading file:', error);
-      alert('Gagal download file');
+      showNotification('error', 'Terjadi kesalahan saat download file');
     }
   };
 
@@ -158,6 +174,53 @@ export function DocumentUpload({ koperasiId, onUploadComplete, documents = [] }:
 
   return (
     <div className="space-y-6">
+      {/* Notification Toast */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in">
+          <div className={`rounded-lg shadow-2xl p-4 max-w-md border-l-4 ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border-green-500' 
+              : 'bg-red-50 border-red-500'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                notification.type === 'success' 
+                  ? 'bg-green-100' 
+                  : 'bg-red-100'
+              }`}>
+                {notification.type === 'success' ? (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-red-600" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold ${
+                  notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {notification.type === 'success' ? 'Berhasil!' : 'Gagal!'}
+                </p>
+                <p className={`text-sm mt-1 ${
+                  notification.type === 'success' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setNotification(null)}
+                className={`flex-shrink-0 ${
+                  notification.type === 'success' 
+                    ? 'text-green-400 hover:text-green-600' 
+                    : 'text-red-400 hover:text-red-600'
+                } transition-colors`}
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {DOCUMENT_TYPES.map((docType) => {
           const uploadedDoc = getDocumentByType(docType.value);
@@ -282,13 +345,13 @@ export function DocumentUpload({ koperasiId, onUploadComplete, documents = [] }:
             <div>
               <h4 className="font-semibold text-gray-900">Status Upload</h4>
               <p className="text-sm text-gray-600">
-                {documents.length} dari {DOCUMENT_TYPES.length} dokumen telah diupload
+                {uploadedDocs.length} dari {DOCUMENT_TYPES.length} dokumen telah diupload
               </p>
             </div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-blue-600">
-              {Math.round((documents.length / DOCUMENT_TYPES.length) * 100)}%
+              {Math.round((uploadedDocs.length / DOCUMENT_TYPES.length) * 100)}%
             </div>
             <p className="text-xs text-gray-500">Kelengkapan</p>
           </div>
@@ -298,20 +361,32 @@ export function DocumentUpload({ koperasiId, onUploadComplete, documents = [] }:
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(documents.length / DOCUMENT_TYPES.length) * 100}%` }}
+              style={{ width: `${(uploadedDocs.length / DOCUMENT_TYPES.length) * 100}%` }}
             ></div>
           </div>
         </div>
 
-        {documents.length === DOCUMENT_TYPES.length && (
+        {uploadedDocs.length === DOCUMENT_TYPES.length && (
           <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
             <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-green-900">Semua dokumen telah diupload!</p>
               <p className="text-xs text-green-700 mt-1">
-                Koperasi Anda akan segera diverifikasi oleh admin.
+                Klik tombol "Selesai" di bawah untuk melanjutkan.
               </p>
             </div>
+          </div>
+        )}
+
+        {uploadedDocs.length > 0 && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => onUploadComplete && onUploadComplete()}
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Selesai
+            </button>
           </div>
         )}
       </div>

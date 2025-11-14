@@ -53,6 +53,11 @@ export default function ProfilePage() {
       if (!response.ok) throw new Error('Failed to fetch user data');
       
       const data = await response.json();
+      // Guard: Redirect if user hasn't registered a koperasi
+      if (!data.user.ownedKoperasi) {
+        router.push('/dashboard/low/koperasi?redirect=profile');
+        return;
+      }
       setUser(data.user);
       setFormData({
         name: data.user.name || '',

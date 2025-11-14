@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import LayoutWrapper from '../../../../components/layout/LayoutWrapper';
 import { KoperasiForm, KoperasiFormData } from '../../../../components/ui/KoperasiForm';
+import { DocumentUpload } from '../../../../components/ui/DocumentUpload';
 import { Button } from '../../../../components/ui/Button';
 import { 
   Building2, 
@@ -19,7 +20,10 @@ import {
   Users,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  AlertCircle,
+  X as XIcon,
+  Upload
 } from 'lucide-react';
 
 interface User {
@@ -63,7 +67,12 @@ export default function KoperasiManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [newKoperasiId, setNewKoperasiId] = useState<string>('');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -90,6 +99,31 @@ export default function KoperasiManagement() {
 
     fetchUser();
   }, [router]);
+
+  // Check for redirect parameter and show notification
+  useEffect(() => {
+    const redirectFrom = searchParams.get('redirect');
+    if (redirectFrom) {
+      const messages: Record<string, string> = {
+        'dashboard': 'Silakan daftarkan koperasi Anda terlebih dahulu untuk mengakses dashboard',
+        'profile': 'Silakan daftarkan koperasi Anda terlebih dahulu untuk mengakses profil',
+        'kegiatan': 'Silakan daftarkan koperasi Anda terlebih dahulu untuk melihat kegiatan',
+        'rat': 'Silakan daftarkan koperasi Anda terlebih dahulu untuk mengelola RAT',
+        'members': 'Silakan daftarkan koperasi Anda terlebih dahulu untuk mengelola anggota'
+      };
+      
+      const message = messages[redirectFrom] || 'Silakan daftarkan koperasi Anda terlebih dahulu';
+      setNotificationMessage(message);
+      setShowNotification(true);
+      
+      // Auto-hide notification after 5 seconds
+      const timer = setTimeout(() => {
+        setShowNotification(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   const fetchKoperasiList = async () => {
     try {
@@ -142,12 +176,16 @@ export default function KoperasiManagement() {
       const result = await response.json();
 
       if (response.ok) {
-        setSubmitSuccess(true);
-        setTimeout(() => {
-          setShowForm(false);
-          setSubmitSuccess(false);
-          fetchKoperasiList(); // Refresh list
-        }, 2000);
+        // Save the koperasi ID and show document upload page
+        const koperasiId = result.koperasi?.id || result.data?.id;
+        if (!koperasiId) {
+          console.error('Koperasi ID not found in response:', result);
+          alert('Data berhasil disimpan, namun terjadi kesalahan. Silakan refresh halaman.');
+          return;
+        }
+        setNewKoperasiId(koperasiId);
+        setShowForm(false);
+        setShowDocumentUpload(true);
       } else {
         alert(result.error || 'Terjadi kesalahan saat mendaftarkan koperasi');
       }
@@ -157,6 +195,28 @@ export default function KoperasiManagement() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDocumentUploadComplete = () => {
+    // Show success message after documents are uploaded
+    setShowDocumentUpload(false);
+    setSubmitSuccess(true);
+    setTimeout(() => {
+      setSubmitSuccess(false);
+      setNewKoperasiId('');
+      fetchKoperasiList(); // Refresh list
+    }, 2000);
+  };
+
+  const handleSkipDocuments = () => {
+    // Allow user to skip document upload for now
+    setShowDocumentUpload(false);
+    setSubmitSuccess(true);
+    setTimeout(() => {
+      setSubmitSuccess(false);
+      setNewKoperasiId('');
+      fetchKoperasiList(); // Refresh list
+    }, 2000);
   };
 
   const getStatusBadge = (status: string) => {
@@ -279,6 +339,71 @@ export default function KoperasiManagement() {
             onCancel={() => setShowForm(false)}
             isSubmitting={isSubmitting}
           />
+        </div>
+      </LayoutWrapper>
+    );
+  }
+
+  // Show document upload page
+  if (showDocumentUpload && newKoperasiId) {
+    return (
+      <LayoutWrapper 
+        userRole="LOW" 
+        onRoleChange={() => {}} 
+        activeSection="koperasi" 
+        onSectionChange={() => {}}
+        userName={user.name}
+        onLogout={handleLogout}
+      >
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckIcon className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Data Koperasi Berhasil Disimpan!
+              </h1>
+              <p className="text-gray-600">
+                Selanjutnya, lengkapi dokumen persyaratan koperasi Anda
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
+            <div className="flex items-start">
+              <Upload className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
+              <div>
+                <h3 className="text-blue-900 font-semibold mb-2">Dokumen yang Diperlukan:</h3>
+                <ul className="space-y-1 text-sm text-blue-800">
+                  <li>1. Akta Pendirian Koperasi (PDF)</li>
+                  <li>2. Berita Acara Rapat Pendirian (PDF)</li>
+                  <li>3. Daftar Nama & KTP Pendiri (PDF)</li>
+                  <li>4. Bukti Setoran Modal Awal (PDF)</li>
+                </ul>
+                <p className="mt-3 text-sm text-blue-700 font-medium">
+                  Anda juga dapat melengkapi dokumen ini nanti melalui menu "Upload Dokumen"
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DocumentUpload 
+            koperasiId={newKoperasiId}
+            onUploadComplete={handleDocumentUploadComplete}
+          />
+
+          <div className="flex justify-between items-center gap-3 pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              Upload minimal 1 dokumen, lalu klik "Selesai" untuk melanjutkan
+            </p>
+            <Button
+              variant="outline"
+              onClick={handleSkipDocuments}
+            >
+              Lewati, Upload Nanti
+            </Button>
+          </div>
         </div>
       </LayoutWrapper>
     );
@@ -434,6 +559,33 @@ export default function KoperasiManagement() {
       onLogout={handleLogout}
     >
       <div className="space-y-6">
+        {/* Notification Toast */}
+        {showNotification && (
+          <div className="fixed top-4 right-4 z-50 animate-slide-in">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-lg max-w-md">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-yellow-400" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className="text-sm font-medium text-yellow-800">
+                    Perhatian
+                  </p>
+                  <p className="mt-1 text-sm text-yellow-700">
+                    {notificationMessage}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowNotification(false)}
+                  className="ml-4 flex-shrink-0 text-yellow-400 hover:text-yellow-600"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

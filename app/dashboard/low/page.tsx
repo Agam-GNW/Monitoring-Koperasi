@@ -81,6 +81,11 @@ export default function LowDashboard() {
             router.push('/dashboard/high');
             return;
           }
+          // Guard: Redirect if user hasn't registered a koperasi
+          if (!userData.user.ownedKoperasi) {
+            router.push('/dashboard/low/koperasi?redirect=dashboard');
+            return;
+          }
           setUser(userData.user);
         } else {
           router.push('/login');

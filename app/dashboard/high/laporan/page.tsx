@@ -261,30 +261,6 @@ export default function LaporanAnalitikPage() {
 
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Status Legal
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <span className="text-sm text-gray-600">Legal</span>
-                <span className="font-semibold text-blue-600">{dashboardStats?.legal.legal || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <span className="text-sm text-gray-600">Pending Review</span>
-                <span className="font-semibold text-yellow-600">{dashboardStats?.legal.pendingLegal || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-600">Persentase Legal</span>
-                <span className="font-semibold text-gray-900">
-                  {dashboardStats?.total > 0 
-                    ? ((dashboardStats.legal.legal / dashboardStats.total) * 100).toFixed(1)
-                    : 0}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Distribusi Persentase
             </h3>
             <div className="space-y-4">
@@ -339,9 +315,6 @@ export default function LaporanAnalitikPage() {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status Legal
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Total Anggota
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -352,7 +325,7 @@ export default function LaporanAnalitikPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {koperasiList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <p>Belum ada koperasi terdaftar</p>
                     </td>
@@ -385,19 +358,6 @@ export default function LaporanAnalitikPage() {
                            koperasi.status === 'AKTIF_TIDAK_SEHAT' ? 'Aktif Tidak Sehat' :
                            koperasi.status === 'DITOLAK' ? 'Ditolak' :
                            'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          koperasi.legalStatus === 'LEGAL' ? 'bg-blue-100 text-blue-800' :
-                          koperasi.legalStatus === 'PENDING_REVIEW' ? 'bg-yellow-100 text-yellow-800' :
-                          koperasi.legalStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {koperasi.legalStatus === 'LEGAL' ? 'Legal' :
-                           koperasi.legalStatus === 'PENDING_REVIEW' ? 'Pending' :
-                           koperasi.legalStatus === 'REJECTED' ? 'Ditolak' :
-                           'Belum Submit'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

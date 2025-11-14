@@ -75,7 +75,7 @@ export default function MembersPage() {
             return;
           }
           if (!userData.user.ownedKoperasi) {
-            router.push('/dashboard/low/koperasi');
+            router.push('/dashboard/low/koperasi?redirect=members');
             return;
           }
           setUser(userData.user);

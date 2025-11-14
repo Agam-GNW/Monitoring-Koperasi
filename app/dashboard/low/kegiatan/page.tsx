@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
 import { 
   Calendar,
@@ -10,7 +10,8 @@ import {
   Users,
   Eye,
   X,
-  CheckCircle
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 interface User {
@@ -41,8 +42,10 @@ export default function EventViewPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('UPCOMING');
+  const [showToast, setShowToast] = useState(false);
   
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -52,6 +55,11 @@ export default function EventViewPage() {
           const userData = await response.json();
           if (userData.user.role !== 'LOW') {
             router.push('/dashboard/high');
+            return;
+          }
+          // Guard: Redirect if user hasn't registered a koperasi
+          if (!userData.user.ownedKoperasi) {
+            router.push('/dashboard/low/koperasi?redirect=kegiatan');
             return;
           }
           setUser(userData.user);

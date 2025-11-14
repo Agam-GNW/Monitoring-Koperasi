@@ -32,13 +32,15 @@ export default function RATPage() {
 
       setUserName(data.user.name);
 
-      // Get koperasi details
-      if (data.user.ownedKoperasi) {
-        setKoperasiId(data.user.ownedKoperasi.id);
-        setKoperasiName(data.user.ownedKoperasi.name);
-      } else {
-        setError('Anda belum terdaftar sebagai pemilik koperasi');
+      // Guard: Redirect if user hasn't registered a koperasi
+      if (!data.user.ownedKoperasi) {
+        router.push('/dashboard/low/koperasi?redirect=rat');
+        return;
       }
+
+      // Get koperasi details
+      setKoperasiId(data.user.ownedKoperasi.id);
+      setKoperasiName(data.user.ownedKoperasi.name);
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan');
     } finally {
