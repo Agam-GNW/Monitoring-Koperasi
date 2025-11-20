@@ -1,0 +1,128 @@
+classDiagram
+    %% ========================================
+    %% SIMPLIFIED CLASS DIAGRAM - KEY FEATURES
+    %% ========================================
+    
+    %% Main Entities with Core Attributes Only
+    class User {
+        +String id
+        +String email
+        +String name
+        +UserRole role
+        +String phone
+        +String profileImage
+        --
+        +login()
+        +register()
+        +updateProfile()
+    }
+    
+    class Koperasi {
+        +String id
+        +String name
+        +KoperasiType type
+        +KoperasiStatus status
+        +String address
+        +String contactPerson
+        +String contactPhone
+        +Int totalMembers
+        +Float totalFunds
+        +DateTime registrationDate
+        --
+        +register()
+        +submitForApproval()
+        +updateStatistics()
+    }
+    
+    class Member {
+        +String id
+        +String name
+        +String nik
+        +DateTime dateOfBirth
+        +String address
+        +String phone
+        +String memberNumber
+        +Boolean isActive
+        --
+        +addMember()
+        +updateMember()
+        +deactivate()
+    }
+    
+    class Document {
+        +String id
+        +DocumentType documentType
+        +String fileName
+        +String filePath
+        +DocumentStatus status
+        +DateTime uploadDate
+        --
+        +upload()
+        +review()
+        +approve()
+        +reject()
+    }
+    
+    class Activity {
+        +String id
+        +String title
+        +DateTime date
+        +ActivityType type
+        +ActivityStatus status
+        +String location
+        --
+        +create()
+        +update()
+        +cancel()
+    }
+    
+    class Event {
+        +String id
+        +String title
+        +DateTime eventDate
+        +String startTime
+        +String endTime
+        +String location
+        +EventStatus status
+        --
+        +create()
+        +update()
+        +cancel()
+    }
+    
+    %% Key Enumerations
+    class UserRole {
+        <<enumeration>>
+        HIGH
+        LOW
+    }
+    
+    class KoperasiStatus {
+        <<enumeration>>
+        PENDING_VERIFICATION
+        PENDING_APPROVAL
+        AKTIF_SEHAT
+        DITOLAK
+    }
+    
+    class DocumentStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+    }
+    
+    %% Relationships
+    User "1" --> "0..1" Koperasi : manages
+    Koperasi "1" --> "*" Member : has
+    Koperasi "1" --> "*" Document : contains
+    Koperasi "1" --> "*" Activity : organizes
+    
+    User ..> UserRole : has
+    Koperasi ..> KoperasiStatus : has
+    Document ..> DocumentStatus : has
+    
+    %% Notes
+    note for User "Admin (HIGH) manages all koperasi\nManager (LOW) manages own koperasi"
+    note for Koperasi "Core entity with approval workflow\nand statistics tracking"
+    note for Document "Handles document verification\nfor koperasi registration"

@@ -1,0 +1,281 @@
+classDiagram
+    %% ========================================
+    %% ENUMS
+    %% ========================================
+    
+    class UserRole {
+        <<enumeration>>
+        HIGH
+        LOW
+    }
+    
+    class KoperasiType {
+        <<enumeration>>
+        SIMPAN_PINJAM
+        KONSUMSI
+        PRODUKSI
+        JASA
+        SERBA_USAHA
+    }
+    
+    class KoperasiStatus {
+        <<enumeration>>
+        PENDING_VERIFICATION
+        PENDING_SURVEY
+        SURVEY_SCHEDULED
+        SURVEY_COMPLETED
+        PENDING_APPROVAL
+        AKTIF_SEHAT
+        AKTIF_TIDAK_SEHAT
+        DITOLAK
+    }
+    
+    class LegalStatus {
+        <<enumeration>>
+        LEGAL
+        PENDING_REVIEW
+        REJECTED
+        NOT_SUBMITTED
+    }
+    
+    class ActivityType {
+        <<enumeration>>
+        MEETING
+        TRAINING
+        AUDIT
+        EVENT
+        OTHER
+    }
+    
+    class ActivityStatus {
+        <<enumeration>>
+        PLANNED
+        IN_PROGRESS
+        COMPLETED
+        CANCELLED
+    }
+    
+    class EventStatus {
+        <<enumeration>>
+        UPCOMING
+        ONGOING
+        COMPLETED
+        CANCELLED
+    }
+    
+    class DocumentStatus {
+        <<enumeration>>
+        PENDING
+        APPROVED
+        REJECTED
+        RESUBMIT
+    }
+    
+    class DocumentType {
+        <<enumeration>>
+        AKTA_PENDIRIAN
+        BERITA_ACARA
+        DAFTAR_PENDIRI
+        BUKTI_SETORAN
+        SURAT_DOMISILI
+        NPWP
+        RAT
+        OTHER
+    }
+    
+    %% ========================================
+    %% MAIN CLASSES
+    %% ========================================
+    
+    class User {
+        +String id
+        +String email
+        +String name
+        -String password
+        +UserRole role
+        +String phone
+        +DateTime emailVerified
+        +String image
+        +String profileImage
+        +DateTime createdAt
+        +DateTime updatedAt
+        --
+        +login()
+        +logout()
+        +updateProfile()
+        +changePassword()
+        +uploadProfileImage()
+    }
+    
+    class Koperasi {
+        +String id
+        +String name
+        +KoperasiType type
+        +KoperasiStatus status
+        +LegalStatus legalStatus
+        +Int totalMembers
+        +DateTime registrationDate
+        +DateTime lastActivity
+        +String address
+        +String contactPerson
+        +String contactPhone
+        +String contactEmail
+        +String description
+        +Float totalFunds
+        +Int activeMembers
+        +Float monthlyTransactions
+        +DateTime submissionDate
+        +DateTime approvalDate
+        +String approvalNotes
+        +String rejectionReason
+        +Int resubmissionCount
+        +DateTime lastRejectionDate
+        +DateTime surveyScheduledDate
+        +DateTime surveyCompletedDate
+        +String surveyNotes
+        +String surveyOfficer
+        +DateTime documentsVerifiedDate
+        +String documentsVerifiedBy
+        +String ownerId
+        +DateTime createdAt
+        +DateTime updatedAt
+        --
+        +register()
+        +submit()
+        +approve()
+        +reject()
+        +scheduleSurvey()
+        +completeSurvey()
+        +verifyDocuments()
+        +updateStats()
+        +addMember()
+        +removeMember()
+    }
+    
+    class Member {
+        +String id
+        +String name
+        +String nik
+        +DateTime dateOfBirth
+        +String placeOfBirth
+        +String gender
+        +String address
+        +String phone
+        +String email
+        +DateTime joinDate
+        +String memberNumber
+        +Boolean isActive
+        +String koperasiId
+        +DateTime createdAt
+        +DateTime updatedAt
+        --
+        +register()
+        +activate()
+        +deactivate()
+        +updateInfo()
+    }
+    
+    class Activity {
+        +String id
+        +String title
+        +String description
+        +DateTime date
+        +ActivityType type
+        +ActivityStatus status
+        +String location
+        +String koperasiId
+        +DateTime createdAt
+        +DateTime updatedAt
+        --
+        +create()
+        +update()
+        +delete()
+        +changeStatus()
+        +getParticipants()
+    }
+    
+    class Document {
+        +String id
+        +DocumentType documentType
+        +String fileName
+        +String originalName
+        +String filePath
+        +Int fileSize
+        +String mimeType
+        +DocumentStatus status
+        +DateTime uploadDate
+        +DateTime reviewDate
+        +String reviewNotes
+        +String reviewedBy
+        +Boolean isRequired
+        +String koperasiId
+        +DateTime createdAt
+        +DateTime updatedAt
+        --
+        +upload()
+        +review()
+        +approve()
+        +reject()
+        +download()
+        +delete()
+    }
+    
+    class Event {
+        +String id
+        +String title
+        +String description
+        +DateTime eventDate
+        +String startTime
+        +String endTime
+        +String location
+        +String organizer
+        +EventStatus status
+        +Int maxParticipants
+        +String createdBy
+        +DateTime createdAt
+        +DateTime updatedAt
+        --
+        +create()
+        +update()
+        +delete()
+        +changeStatus()
+        +getParticipants()
+        +registerParticipant()
+    }
+    
+    %% ========================================
+    %% RELATIONSHIPS
+    %% ========================================
+    
+    User "1" --> "0..1" Koperasi : owns (LOW role only)
+    User ..> UserRole : uses
+    
+    Koperasi "1" --> "0..*" Member : has
+    Koperasi "1" --> "0..*" Activity : has
+    Koperasi "1" --> "0..*" Document : has
+    Koperasi ..> KoperasiType : uses
+    Koperasi ..> KoperasiStatus : uses
+    Koperasi ..> LegalStatus : uses
+    
+    Member ..> Koperasi : belongs to
+    
+    Activity ..> Koperasi : belongs to
+    Activity ..> ActivityType : uses
+    Activity ..> ActivityStatus : uses
+    
+    Document ..> Koperasi : belongs to
+    Document ..> DocumentType : uses
+    Document ..> DocumentStatus : uses
+    
+    Event ..> EventStatus : uses
+    Event ..> User : created by
+    
+    %% ========================================
+    %% NOTES
+    %% ========================================
+    
+    note for User "User with role HIGH = Administrator\nUser with role LOW = Koperasi Manager\nOnly LOW users can own koperasi (1:1 relationship)"
+    
+    note for Koperasi "Central entity for cooperative management\nContains approval workflow, survey tracking,\nand document verification processes"
+    
+    note for Event "Standalone entity for system-wide events\nNot linked to specific koperasi\nManaged by administrators"

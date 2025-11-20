@@ -1,0 +1,125 @@
+erDiagram
+    %% === USERS & AUTHENTICATION ===
+    %% User model represents both Administrator (HIGH) and Koperasi Manager (LOW)
+    User ||--o| Koperasi : "owns (LOW role only)"
+    User {
+        string id PK
+        string email UK
+        string name
+        string password
+        UserRole role "HIGH=Administrator, LOW=Koperasi Manager"
+        string phone
+        datetime emailVerified
+        string image
+        string profileImage
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% === KOPERASI (COOPERATIVE) ===
+    Koperasi ||--o{ Member : "has"
+    Koperasi ||--o{ Activity : "has"
+    Koperasi ||--o{ Document : "has"
+    Koperasi {
+        string id PK
+        string name
+        KoperasiType type
+        KoperasiStatus status
+        LegalStatus legalStatus
+        int totalMembers
+        datetime registrationDate
+        datetime lastActivity
+        string address
+        string contactPerson
+        string contactPhone
+        string contactEmail
+        string description
+        float totalFunds
+        int activeMembers
+        float monthlyTransactions
+        datetime submissionDate
+        datetime approvalDate
+        string approvalNotes
+        string rejectionReason
+        int resubmissionCount
+        datetime lastRejectionDate
+        datetime surveyScheduledDate
+        datetime surveyCompletedDate
+        string surveyNotes
+        string surveyOfficer
+        datetime documentsVerifiedDate
+        string documentsVerifiedBy
+        string ownerId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% === MEMBERS ===
+    Member {
+        string id PK
+        string name
+        string nik UK
+        datetime dateOfBirth
+        string placeOfBirth
+        string gender
+        string address
+        string phone
+        string email
+        datetime joinDate
+        string memberNumber
+        boolean isActive
+        string koperasiId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% === ACTIVITIES ===
+    Activity {
+        string id PK
+        string title
+        string description
+        datetime date
+        ActivityType type
+        ActivityStatus status
+        string location
+        string koperasiId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% === DOCUMENTS ===
+    Document {
+        string id PK
+        DocumentType documentType
+        string fileName
+        string originalName
+        string filePath
+        int fileSize
+        string mimeType
+        DocumentStatus status
+        datetime uploadDate
+        datetime reviewDate
+        string reviewNotes
+        string reviewedBy
+        boolean isRequired
+        string koperasiId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% === EVENTS (STANDALONE) ===
+    Event {
+        string id PK
+        string title
+        string description
+        datetime eventDate
+        string startTime
+        string endTime
+        string location
+        string organizer
+        EventStatus status
+        int maxParticipants
+        string createdBy
+        datetime createdAt
+        datetime updatedAt
+    }

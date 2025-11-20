@@ -1,0 +1,79 @@
+%% ========================================
+%% ACTIVITY DIAGRAM - KOPERASI REGISTRATION WORKFLOW
+%% ========================================
+
+graph TD
+    Start([User Mendaftar]) --> CheckRole{User Role?}
+    
+    %% LOW User Registration Flow
+    CheckRole -->|LOW - Koperasi Manager| FillKoperasiForm[Mengisi Form Koperasi]
+    FillKoperasiForm --> UploadDocs[Upload Dokumen Persyaratan]
+    UploadDocs --> SubmitRegistration[Submit Pendaftaran]
+    SubmitRegistration --> StatusPendingVerif[Status: PENDING_VERIFICATION]
+    
+    %% Admin Verification Flow
+    StatusPendingVerif --> AdminReviewDocs{Admin Review Dokumen}
+    AdminReviewDocs -->|Dokumen Ditolak| RejectDocs[Status: DITOLAK]
+    RejectDocs --> NotifyRejection[Kirim Notifikasi Penolakan]
+    NotifyRejection --> CanResubmit{Resubmit?}
+    CanResubmit -->|Ya| UpdateDocs[Update Dokumen]
+    UpdateDocs --> SubmitRegistration
+    CanResubmit -->|Tidak| End1([Selesai])
+    
+    AdminReviewDocs -->|Dokumen Disetujui| VerifyDocs[Verifikasi Dokumen]
+    VerifyDocs --> StatusPendingSurvey[Status: PENDING_SURVEY]
+    
+    %% Survey Process
+    StatusPendingSurvey --> ScheduleSurvey[Jadwalkan Survei Lokasi]
+    ScheduleSurvey --> StatusSurveyScheduled[Status: SURVEY_SCHEDULED]
+    StatusSurveyScheduled --> ConductSurvey[Pelaksanaan Survei]
+    ConductSurvey --> StatusSurveyCompleted[Status: SURVEY_COMPLETED]
+    
+    %% Final Approval
+    StatusSurveyCompleted --> AdminFinalReview{Admin Final Review}
+    AdminFinalReview -->|Ditolak| FinalReject[Status: DITOLAK]
+    FinalReject --> NotifyFinalRejection[Kirim Notifikasi]
+    NotifyFinalRejection --> End2([Selesai])
+    
+    AdminFinalReview -->|Disetujui| ApproveKoperasi[Status: AKTIF_SEHAT]
+    ApproveKoperasi --> CreateDashboard[Buat Dashboard Koperasi]
+    CreateDashboard --> EnableFeatures[Aktifkan Fitur Manajemen]
+    
+    %% Koperasi Management Features
+    EnableFeatures --> ManageMembers[Kelola Anggota]
+    EnableFeatures --> ManageActivities[Kelola Kegiatan]
+    EnableFeatures --> UploadRAT[Upload Dokumen RAT]
+    EnableFeatures --> ViewStatistics[Lihat Statistik]
+    
+    ManageMembers --> End3([Selesai])
+    ManageActivities --> End3
+    UploadRAT --> End3
+    ViewStatistics --> End3
+    
+    %% HIGH User (Admin) Flow
+    CheckRole -->|HIGH - Administrator| AdminDashboard[Dashboard Admin]
+    AdminDashboard --> AdminFeatures{Pilih Fitur}
+    
+    AdminFeatures --> ReviewKoperasi[Review Pendaftaran Koperasi]
+    AdminFeatures --> CreateEvent[Buat Event System]
+    AdminFeatures --> ViewAllStats[Lihat Semua Statistik]
+    AdminFeatures --> ManageUsers[Kelola User]
+    
+    ReviewKoperasi --> AdminReviewDocs
+    CreateEvent --> End4([Selesai])
+    ViewAllStats --> End4
+    ManageUsers --> End4
+    
+    style Start fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style End1 fill:#F44336,stroke:#C62828,color:#fff
+    style End2 fill:#F44336,stroke:#C62828,color:#fff
+    style End3 fill:#2196F3,stroke:#1565C0,color:#fff
+    style End4 fill:#2196F3,stroke:#1565C0,color:#fff
+    
+    style StatusPendingVerif fill:#FFC107,stroke:#F57C00,color:#000
+    style StatusPendingSurvey fill:#FFC107,stroke:#F57C00,color:#000
+    style StatusSurveyScheduled fill:#FFC107,stroke:#F57C00,color:#000
+    style StatusSurveyCompleted fill:#FFC107,stroke:#F57C00,color:#000
+    style ApproveKoperasi fill:#4CAF50,stroke:#2E7D32,color:#fff
+    style RejectDocs fill:#F44336,stroke:#C62828,color:#fff
+    style FinalReject fill:#F44336,stroke:#C62828,color:#fff
